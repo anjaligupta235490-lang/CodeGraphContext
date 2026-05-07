@@ -600,8 +600,10 @@ class GraphWriter:
                 session.run(
                     """
                     UNWIND $batch AS row
-                    MATCH (child:Class {name: row.child_name, path: row.path})
-                    MATCH (parent:Class {name: row.parent_name, path: row.resolved_parent_file_path})
+                    MATCH (child {name: row.child_name, path: row.path})
+                    WHERE child:Class OR child:Trait OR child:Interface
+                    MATCH (parent {name: row.parent_name, path: row.resolved_parent_file_path})
+                    WHERE parent:Class OR parent:Trait OR parent:Interface
                     MERGE (child)-[r:INHERITS]->(parent)
                     SET r.confidence_label = coalesce(row.confidence_label, 'EXTRACTED')
                 """,

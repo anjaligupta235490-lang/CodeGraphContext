@@ -102,7 +102,8 @@ async def run_scip_index_async(
                         for c in file_data.get("classes", []):
                             ts_c = ts_classes.get(c["name"])
                             if ts_c:
-                                c["bases"] = ts_c.get("bases", [])
+                                # Prioritize SCIP bases if present, fallback to Tree-sitter
+                                c["bases"] = c.get("bases") or ts_c.get("bases", [])
 
                         file_data["imports"] = ts_data.get("imports", [])
                         file_data["variables"] = ts_data.get("variables", [])
