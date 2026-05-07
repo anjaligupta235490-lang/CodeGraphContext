@@ -58,6 +58,7 @@ EXTENSION_TO_SCIP: Dict[str, Tuple[str, str, str, str]] = {
     ".go":   ("go",         "scip-go",         "go install github.com/sourcegraph/scip-go/...@latest", "sourcegraph/scip-go"),
     ".rs":   ("rust",       "scip-rust",       "cargo install scip-rust", "sourcegraph/scip-rust"),
     ".java": ("java",       "scip-java",       "see https://github.com/sourcegraph/scip-java", "sourcegraph/scip-java"),
+    ".dart": ("dart",       "scip_dart",       "dart pub global activate scip_dart", "dart:stable"),
     ".cpp":  ("cpp",        "scip-clang",      "brew install llvm", "sourcegraph/scip-clang"),
     ".hpp":  ("cpp",        "scip-clang",      "brew install llvm", "sourcegraph/scip-clang"),
     ".c":    ("c",          "scip-clang",      "brew install llvm", "sourcegraph/scip-clang"),
@@ -176,6 +177,9 @@ class ScipIndexer:
                 if lang == "go" and not binary:
                     # Specific override for scip-go if binary not found locally
                     internal_cmd = ["scip-go", "index", ".", "--output", "/out/index.scip"]
+                elif lang == "dart":
+                    # Dart docker image doesn't have scip_dart pre-installed
+                    internal_cmd = ["bash", "-c", "dart pub global activate scip_dart && dart pub get && dart pub global run scip_dart ./"]
                 
                 docker_cmd.extend(internal_cmd)
                 
@@ -235,6 +239,11 @@ class ScipIndexer:
 
         elif lang == "rust":
             return [binary, "index", "--output", out]
+
+        elif lang == "dart":
+            # For local installations, 'binary' is usually just 'scip_dart' or we run via 'dart pub global run scip_dart ./'
+            # We assume 'binary' is resolved or we rely on 'dart'
+            return ["dart", "pub", "global", "run", "scip_dart", "./"]
 
         elif lang == "java":
             return [binary, "index", "--output", out]

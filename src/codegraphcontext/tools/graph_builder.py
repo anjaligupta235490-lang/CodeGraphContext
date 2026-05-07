@@ -940,7 +940,7 @@ class GraphBuilder:
             if scip_enabled:
                 from .scip_indexer import detect_project_lang, is_scip_available
 
-                scip_langs_str = get_config_value("SCIP_LANGUAGES") or "python,typescript,go,rust,java"
+                scip_langs_str = get_config_value("SCIP_LANGUAGES") or "python,typescript,javascript,go,rust,java,dart"
                 scip_languages = [l.strip() for l in scip_langs_str.split(",") if l.strip()]
                 detected_lang = detect_project_lang(path, scip_languages)
 
