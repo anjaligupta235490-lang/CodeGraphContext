@@ -1219,6 +1219,8 @@ def resolve_function_call(
             candidates = imports_map[called_name]
             for path in candidates:
                 for imp_name in local_imports.values():
+                    if not isinstance(imp_name, str):
+                        continue
                     if imp_name.replace(".", "/") in path:
                         resolved_path = path
                         is_unresolved_external = False
