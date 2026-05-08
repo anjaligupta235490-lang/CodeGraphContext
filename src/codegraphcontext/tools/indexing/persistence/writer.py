@@ -992,7 +992,8 @@ class GraphWriter:
                         UNWIND $batch AS q
                         MATCH (fn:Function {{name: q.method_name, path: q.method_path}})
                         MERGE (tbl:DbTable {{name: q.table_name}})
-                        ON CREATE SET tbl.fqn = q.table_name
+                        ON CREATE SET tbl.fqn = q.table_name, tbl.datasource_name = 'mysql'
+                        ON MATCH SET tbl.datasource_name = COALESCE(tbl.datasource_name, 'mysql')
                         MERGE (fn)-[:{op} {{line_number: q.line_number}}]->(tbl)
                         """,
                         batch=op_edges[i : i + batch_size],
@@ -1035,7 +1036,8 @@ class GraphWriter:
                         MATCH (fn:Function {{name: q.method_name}})
                         WHERE fn.class_context = q.class_name
                         MERGE (tbl:DbTable {{name: q.table_name}})
-                        ON CREATE SET tbl.fqn = q.table_name
+                        ON CREATE SET tbl.fqn = q.table_name, tbl.datasource_name = 'mysql'
+                        ON MATCH SET tbl.datasource_name = COALESCE(tbl.datasource_name, 'mysql')
                         MERGE (fn)-[:{op}]->(tbl)
                         """,
                         batch=op_edges[i : i + batch_size],
