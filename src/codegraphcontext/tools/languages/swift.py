@@ -13,9 +13,7 @@ SWIFT_QUERIES = {
     """,
     "classes": """
         [
-            (class_declaration "class") @class
-            (class_declaration "struct") @struct
-            (class_declaration "enum") @enum
+            (class_declaration) @class_decl
             (protocol_declaration) @protocol
         ]
     """,
@@ -277,13 +275,32 @@ class SwiftTreeSitterParser:
         seen_nodes = set()
 
         for node, capture_name in captures:
-            if capture_name in ("class", "struct", "enum", "protocol"):
+            if capture_name in ("class_decl", "protocol"):
                 node_id = (node.start_byte, node.end_byte, node.type)
                 if node_id in seen_nodes:
                     continue
                 seen_nodes.add(node_id)
                 
                 try:
+                    # Decide category based on keyword
+                    category = "class"
+                    if capture_name == "protocol":
+                        category = "protocol"
+                    else:
+                        for child in node.children:
+                            kw = self._get_node_text(child)
+                            if kw == "struct":
+                                category = "struct"
+                                break
+                            elif kw == "enum":
+                                category = "enum"
+                                break
+                            elif kw == "actor":
+                                category = "class"
+                                break
+                            elif kw == "class":
+                                category = "class"
+                                break
                     start_line = node.start_point[0] + 1
                     end_line = node.end_point[0] + 1
                     
@@ -327,13 +344,13 @@ class SwiftTreeSitterParser:
                     if self.index_source:
                         type_data["source"] = source_text
                     
-                    if capture_name == "class":
+                    if category == "class":
                         classes.append(type_data)
-                    elif capture_name == "struct":
+                    elif category == "struct":
                         structs.append(type_data)
-                    elif capture_name == "enum":
+                    elif category == "enum":
                         enums.append(type_data)
-                    elif capture_name == "protocol":
+                    elif category == "protocol":
                         protocols.append(type_data)
                         
                 except Exception as e:
@@ -356,18 +373,15 @@ class SwiftTreeSitterParser:
                     var_type = "Unknown"
                     
                     # Try to extract variable name
-                    if capture_name == "pattern":
-                        var_name = self._get_node_text(node)
-                    else:
-                        for child in node.children:
-                            if child.type == "simple_identifier":
-                                var_name = self._get_node_text(child)
-                                break
-                            elif child.type == "pattern_binding":
-                                for subchild in child.children:
-                                    if subchild.type == "simple_identifier":
-                                        var_name = self._get_node_text(subchild)
-                                        break
+                    def find_id(n):
+                        if n.type == "simple_identifier":
+                            return self._get_node_text(n)
+                        for c in n.children:
+                            res = find_id(c)
+                            if res: return res
+                        return None
+                    
+                    var_name = find_id(node) or "unknown"
                     
                     # Try to extract type annotation
                     for child in node.children:

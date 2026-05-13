@@ -233,11 +233,11 @@ class JavaTreeSitterParser:
                 elif capture_name == "calls":
                     parsed_calls = self._parse_calls(results, source_code, var_type_map)
 
-            # Spring injection extraction (#887) — needs tree + parsed_classes
-            spring_injections = self._extract_spring_injections(tree, path, parsed_classes)
+            # Spring injection extraction (#887) — needs tree + all types
+            spring_injections = self._extract_spring_injections(tree, path, parsed_classes + parsed_interfaces)
 
             # ORM / datasource mapping extraction (#843)
-            orm_mappings = self._extract_orm_mappings(tree, path, parsed_classes, parsed_functions)
+            orm_mappings = self._extract_orm_mappings(tree, path, parsed_classes + parsed_interfaces, parsed_functions)
 
             return {
                 "path": str(path),

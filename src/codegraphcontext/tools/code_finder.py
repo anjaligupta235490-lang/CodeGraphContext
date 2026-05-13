@@ -830,12 +830,18 @@ class CodeFinder:
             repo_filter = "AND caller.path STARTS WITH $repo_path" if repo_path else ""
             depth_str = f"1..{depth}" if depth > 1 else "1"
             
+            # KùzuDB-optimized: matching on the path end node via nodes(p) indexing
+            # ensures we avoid Binder exceptions for multi-labeled property lookups
+            # on the end node of variable-length paths.
             if path:
                 query = f"""
-                    MATCH p = (caller:Function)-[:CALLS*{depth_str}]->(target:Function {{name: $function_name, path: $path}})
-                    WHERE 1=1 {repo_filter}
-                    UNWIND relationships(p) as rel
-                    WITH startNode(rel) as s, endNode(rel) as e, rel as r
+                    MATCH p = (caller:Function)-[:CALLS*{depth_str}]->(target:Function)
+                    WITH p, nodes(p) as path_nodes, relationships(p) as rels
+                    WITH p, path_nodes, rels, path_nodes[size(path_nodes)-1] as last_node
+                    WHERE last_node.name = $function_name AND last_node.path = $path
+                    {repo_filter}
+                    UNWIND rels as r
+                    WITH startNode(r) as s, endNode(r) as e, r
                     RETURN DISTINCT s.name as caller_name, s.path as caller_path, 
                                     e.name as callee_name, e.path as callee_path, 
                                     r.line_number as line
@@ -844,10 +850,13 @@ class CodeFinder:
                 result = session.run(query, function_name=function_name, path=path, repo_path=repo_path)
             else:
                 query = f"""
-                    MATCH p = (caller:Function)-[:CALLS*{depth_str}]->(target:Function {{name: $function_name}})
-                    WHERE 1=1 {repo_filter}
-                    UNWIND relationships(p) as rel
-                    WITH startNode(rel) as s, endNode(rel) as e, rel as r
+                    MATCH p = (caller:Function)-[:CALLS*{depth_str}]->(target:Function)
+                    WITH p, nodes(p) as path_nodes, relationships(p) as rels
+                    WITH p, path_nodes, rels, path_nodes[size(path_nodes)-1] as last_node
+                    WHERE last_node.name = $function_name
+                    {repo_filter}
+                    UNWIND rels as r
+                    WITH startNode(r) as s, endNode(r) as e, r
                     RETURN DISTINCT s.name as caller_name, s.path as caller_path, 
                                     e.name as callee_name, e.path as callee_path, 
                                     r.line_number as line
@@ -865,9 +874,11 @@ class CodeFinder:
             if path:
                 query = f"""
                     MATCH p = (caller:Function {{name: $function_name, path: $path}})-[:CALLS*{depth_str}]->(callee:Function)
+                    WITH p, nodes(p) as path_nodes, relationships(p) as rels
+                    WITH p, path_nodes, rels, path_nodes[size(path_nodes)-1] as last_node
                     WHERE 1=1 {repo_filter}
-                    UNWIND relationships(p) as rel
-                    WITH startNode(rel) as s, endNode(rel) as e, rel as r
+                    UNWIND rels as r
+                    WITH startNode(r) as s, endNode(r) as e, r
                     RETURN DISTINCT s.name as caller_name, s.path as caller_path, 
                                     e.name as callee_name, e.path as callee_path, 
                                     r.line_number as line
@@ -877,9 +888,11 @@ class CodeFinder:
             else:
                 query = f"""
                     MATCH p = (caller:Function {{name: $function_name}})-[:CALLS*{depth_str}]->(callee:Function)
+                    WITH p, nodes(p) as path_nodes, relationships(p) as rels
+                    WITH p, path_nodes, rels, path_nodes[size(path_nodes)-1] as last_node
                     WHERE 1=1 {repo_filter}
-                    UNWIND relationships(p) as rel
-                    WITH startNode(rel) as s, endNode(rel) as e, rel as r
+                    UNWIND rels as r
+                    WITH startNode(r) as s, endNode(r) as e, r
                     RETURN DISTINCT s.name as caller_name, s.path as caller_path, 
                                     e.name as callee_name, e.path as callee_path, 
                                     r.line_number as line

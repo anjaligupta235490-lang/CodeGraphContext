@@ -277,7 +277,7 @@ class GraphWriter:
                         session.run(
                             f"""
                             UNWIND $batch AS row
-                            MATCH (c:`{label}` {{name: row.class_name, path: $file_path}})
+                            MATCH (c:{label} {{name: row.class_name, path: $file_path}})
                             MATCH (fn:Function {{name: row.func_name, path: $file_path, line_number: row.func_line}})
                             WHERE row.class_line < 0 OR c.line_number = row.class_line
                             MERGE (c)-[:CONTAINS]->(fn)
@@ -333,7 +333,7 @@ class GraphWriter:
                             "full_import_name": full_import_name,
                             "imported_name": imp.get("imported_name") or module_name,
                             "alias": imp.get("alias"),
-                            "line_number": imp.get("line_number"),
+                            "line_number": imp.get("line_number") or 0,
                             "lang": imp.get("lang") or lang,
                         }
                     )
@@ -363,7 +363,7 @@ class GraphWriter:
                         m.full_import_name = coalesce(row.full_import_name, m.full_import_name)
                     MERGE (f)-[r:IMPORTS]->(m)
                     SET r.line_number = row.line_number,
-                        r.alias = row.alias,
+                        r.alias = coalesce(row.alias, ""),
                         r.imported_name = row.imported_name,
                         r.full_import_name = row.full_import_name
                 """,
@@ -456,14 +456,26 @@ class GraphWriter:
 
     def write_function_call_groups(
         self,
-        fn_to_fn: List[Dict],
-        fn_to_class: List[Dict],
-        fn_to_interface: List[Dict],
-        file_to_fn: List[Dict],
-        file_to_class: List[Dict],
-        file_to_interface: List[Dict],
+        fn_to_fn: List[Dict] = None,
+        fn_to_class: List[Dict] = None,
+        fn_to_interface: List[Dict] = None,
+        fn_to_object: List[Dict] = None,
+        file_to_fn: List[Dict] = None,
+        file_to_class: List[Dict] = None,
+        file_to_interface: List[Dict] = None,
+        file_to_object: List[Dict] = None,
     ) -> None:
         batch_size = 1000
+
+        # Initialize defaults to avoid TypeError on missing args or None values
+        fn_to_fn = fn_to_fn or []
+        fn_to_class = fn_to_class or []
+        fn_to_interface = fn_to_interface or []
+        fn_to_object = fn_to_object or []
+        file_to_fn = file_to_fn or []
+        file_to_class = file_to_class or []
+        file_to_interface = file_to_interface or []
+        file_to_object = file_to_object or []
 
         # KuzuDB requires deterministic node labels for relationship creation.
         # We use specific queries for each bucket to satisfy the binder.
@@ -471,9 +483,11 @@ class GraphWriter:
             (fn_to_fn, "Function", "Function"),
             (fn_to_class, "Function", "Class"),
             (fn_to_interface, "Function", "Interface"),
+            (fn_to_object, "Function", "Object"),
             (file_to_fn, "File", "Function"),
             (file_to_class, "File", "Class"),
             (file_to_interface, "File", "Interface"),
+            (file_to_object, "File", "Object"),
         ]
 
         with self.driver.session() as session:
@@ -482,41 +496,76 @@ class GraphWriter:
                     continue
                 
                 # Ensure all rows have the required keys with correct types for KuzuDB
+                sanitized_batch = []
                 for row in batch_data:
+                    if not isinstance(row, dict) or not row.get("caller_file_path") or not row.get("called_name"):
+                        continue
+                    
+                    # Skip rows with explicitly False filters (considered malformed in #885)
+                    if row.get("called_line_number") is False or row.get("called_context") is False:
+                        continue
+
+                    row = dict(row) # Copy to avoid mutating input
                     if "confidence" not in row or row["confidence"] is None:
                         row["confidence"] = 0.0
                     if "resolution_tier" not in row or row["resolution_tier"] is None:
                         row["resolution_tier"] = -1
                     if "confidence_label" not in row or row["confidence_label"] is None:
                         row["confidence_label"] = "EXTRACTED"
-                    if "called_line_number" not in row:
-                        row["called_line_number"] = -1
+                    
+                    val = row.get("called_line_number")
+                    if "called_line_number" not in row or not isinstance(val, int):
+                        # Force int for KuzuDB matching, handle None/0 (#885)
+                        try:
+                            row["called_line_number"] = int(val or 0)
+                        except (ValueError, TypeError):
+                            row["called_line_number"] = 0
+                    
+                    if "called_context" not in row or row["called_context"] is None:
+                        row["called_context"] = ""
+                    if "line_number" not in row or row["line_number"] is None:
+                        row["line_number"] = 0
+                    
+                    sanitized_batch.append(row)
+
+                if not sanitized_batch:
+                    continue
+
+                # Define which labels have a 'context' property in the schema
+                labels_with_context = {"Function", "Variable"}
+                called_context_clause = ""
+                if called_label in labels_with_context:
+                    called_context_clause = 'AND (row.called_context = "" OR called.context = row.called_context)'
 
                 # Choose query pattern based on whether caller is a File
                 if caller_label == "File":
                     q = f"""
                         UNWIND $batch AS row
                         MATCH (caller:File {{path: row.caller_file_path}})
-                        MATCH (called:`{called_label}` {{name: row.called_name, path: row.called_file_path}})
-                        WHERE row.called_line_number < 0 OR called.line_number = row.called_line_number
-                        MERGE (caller)-[c:CALLS {{line_number: row.line_number, args: row.args, full_call_name: row.full_call_name}}]->(called)
-                        SET c.confidence = row.confidence, c.resolution_tier = row.resolution_tier,
-                            c.confidence_label = row.confidence_label
+                        MATCH (called:{called_label} {{name: row.called_name, path: row.called_file_path}})
+                        WHERE (row.called_line_number <= 0 OR called.line_number = row.called_line_number)
+                          {called_context_clause}
+                        MERGE (caller)-[call:CALLS {{line_number: row.line_number, args: row.args, full_call_name: row.full_call_name}}]->(called)
+                        SET call.confidence = row.confidence
+                        SET call.resolution_tier = row.resolution_tier
+                        SET call.confidence_label = row.confidence_label
                     """
                 else:
                     q = f"""
                         UNWIND $batch AS row
-                        MATCH (caller:`{caller_label}` {{name: row.caller_name, path: row.caller_file_path, line_number: row.caller_line_number}})
-                        MATCH (called:`{called_label}` {{name: row.called_name, path: row.called_file_path}})
-                        WHERE row.called_line_number < 0 OR called.line_number = row.called_line_number
-                        MERGE (caller)-[c:CALLS {{line_number: row.line_number, args: row.args, full_call_name: row.full_call_name}}]->(called)
-                        SET c.confidence = row.confidence, c.resolution_tier = row.resolution_tier,
-                            c.confidence_label = row.confidence_label
+                        MATCH (caller:{caller_label} {{name: row.caller_name, path: row.caller_file_path, line_number: row.caller_line_number}})
+                        MATCH (called:{called_label} {{name: row.called_name, path: row.called_file_path}})
+                        WHERE (row.called_line_number <= 0 OR called.line_number = row.called_line_number)
+                          {called_context_clause}
+                        MERGE (caller)-[call:CALLS {{line_number: row.line_number, args: row.args, full_call_name: row.full_call_name}}]->(called)
+                        SET call.confidence = row.confidence
+                        SET call.resolution_tier = row.resolution_tier
+                        SET call.confidence_label = row.confidence_label
                     """
 
                 t0 = time.time()
-                for i in range(0, len(batch_data), batch_size):
-                    batch = batch_data[i : i + batch_size]
+                for i in range(0, len(sanitized_batch), batch_size):
+                    batch = sanitized_batch[i : i + batch_size]
                     try:
                         session.run(q, batch=batch)
                     except Exception as e:
@@ -524,7 +573,7 @@ class GraphWriter:
                             # Skip unsupported label combinations in KuzuDB
                             continue
                         raise e
-                info_logger(f"[CALLS] {caller_label}-to-{called_label}: {len(batch_data)} edges written in {time.time()-t0:.1f}s")
+                info_logger(f"[CALLS] {caller_label}-to-{called_label}: {len(sanitized_batch)} edges written in {time.time()-t0:.1f}s")
 
         info_logger("[CALLS] All relationships processed.")
 
@@ -1028,7 +1077,7 @@ class GraphWriter:
         if key_patterns:
             info_logger(f"[DATASOURCE] Written {len(key_patterns)} RedisKeyPattern nodes for {ds_name}")
 
-    def write_orm_mapping_links(self, orm_batch: List[Dict[str, Any]]) -> None:
+    def write_orm_mappings(self, orm_batch: List[Dict[str, Any]]) -> None:
         """Write MAPS_TO edges from Class → DbTable (JPA, Cassandra, Redis) for #843.
 
         Each record in orm_batch must have:
@@ -1230,7 +1279,7 @@ class GraphWriter:
             while True:
                 with self.driver.session() as session:
                     result = session.run(
-                        f"MATCH (n:`{label}`) WHERE n.path STARTS WITH $prefix "
+                        f"MATCH (n:{label}) WHERE n.path STARTS WITH $prefix "
                         "WITH n LIMIT 10000 DETACH DELETE n RETURN count(n) AS deleted",
                         prefix=path_prefix,
                     ).single()

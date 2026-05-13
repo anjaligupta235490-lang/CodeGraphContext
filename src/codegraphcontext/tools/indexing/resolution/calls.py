@@ -1324,8 +1324,8 @@ def build_function_call_groups(
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Resolve all function calls and return grouped CALLS payloads.
 
-    Return order is backward compatible with existing writer and tests:
-    (fn_to_fn, fn_to_class, fn_to_interface, file_to_fn, file_to_class, file_to_interface)
+    Return order:
+    (fn_to_fn, fn_to_class, fn_to_interface, fn_to_object, file_to_fn, file_to_class, file_to_interface, file_to_object)
     """
     skip_external = (get_config_value("SKIP_EXTERNAL_RESOLUTION") or "false").lower() == "true"
 
@@ -1349,6 +1349,7 @@ def build_function_call_groups(
             ("enums", "Enum"),
             ("records", "Record"),
             ("unions", "Union"),
+            ("objects", "Object"),
         ]:
             for item in fd.get(label, []):
                 sym_labels[item["name"]] = neo4j_label
@@ -1544,7 +1545,7 @@ def build_function_call_groups(
         line_number = func["line_number"]
         companion_objects = [
             class_data
-            for class_data in fd.get("classes", [])
+            for class_data in fd.get("classes", []) + fd.get("interfaces", []) + fd.get("objects", [])
             if (
                 class_data.get("node_type") == "companion_object"
                 or (
@@ -1563,7 +1564,7 @@ def build_function_call_groups(
 
         owners = [
             class_data
-            for class_data in fd.get("classes", [])
+            for class_data in fd.get("classes", []) + fd.get("interfaces", []) + fd.get("objects", [])
             if class_data not in companion_objects
             and class_data.get("line_number") is not None
             and class_data.get("end_line") is not None
@@ -1592,7 +1593,7 @@ def build_function_call_groups(
         file_path = str(Path(fd["path"]).resolve())
         package_name = file_package(fd)
         fd_local_imports = file_local_imports(fd)
-        for class_data in fd.get("classes", []):
+        for class_data in fd.get("classes", []) + fd.get("interfaces", []) + fd.get("objects", []):
             indexed_class = {**class_data, "path": fd["path"], "package": package_name}
             for class_name in type_keys_for_maps(
                 class_data.get("name"),
@@ -2459,32 +2460,37 @@ def build_function_call_groups(
     fn_to_fn: List[Dict[str, Any]] = []
     fn_to_class: List[Dict[str, Any]] = []
     fn_to_interface: List[Dict[str, Any]] = []
+    fn_to_object: List[Dict[str, Any]] = []
     file_to_fn: List[Dict[str, Any]] = []
     file_to_class: List[Dict[str, Any]] = []
     file_to_interface: List[Dict[str, Any]] = []
+    file_to_object: List[Dict[str, Any]] = []
 
     for edge in resolved_calls:
         called_path = str(Path(edge.get("called_file_path", "")).resolve())
         called_name = edge.get("called_name")
-        class_like_targets = file_class_lookup.get(called_path, set())
-
-        # Keep old grouping behavior: class-like callee names are bucketed separately.
-        is_class_like = called_name in class_like_targets
-        is_interface_like = False
+        target_label = file_symbol_labels.get(called_path, {}).get(called_name)
 
         if edge.get("type") == "file":
-            if is_interface_like:
+            if target_label == "Interface":
                 file_to_interface.append(edge)
-            elif is_class_like:
+            elif target_label == "Object":
+                file_to_object.append(edge)
+            elif target_label == "Class":
                 file_to_class.append(edge)
             else:
                 file_to_fn.append(edge)
         else:
-            if is_interface_like:
+            if target_label == "Interface":
                 fn_to_interface.append(edge)
-            elif is_class_like:
+            elif target_label == "Object":
+                fn_to_object.append(edge)
+            elif target_label == "Class":
                 fn_to_class.append(edge)
             else:
                 fn_to_fn.append(edge)
 
-    return fn_to_fn, fn_to_class, fn_to_interface, file_to_fn, file_to_class, file_to_interface
+    return (
+        fn_to_fn, fn_to_class, fn_to_interface, fn_to_object,
+        file_to_fn, file_to_class, file_to_interface, file_to_object
+    )

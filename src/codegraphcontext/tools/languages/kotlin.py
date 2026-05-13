@@ -1285,6 +1285,19 @@ class KotlinTreeSitterParser:
                                 func_data["return_type"] = self._strip_type_modifiers(raw_return_type)
                                 func_data["return_type_full"] = raw_return_type
                                 break
+
+                        if "return_type" not in func_data:
+                            found_eq = False
+                            for child in node.children:
+                                if child.type == "=":
+                                    found_eq = True
+                                    continue
+                                if found_eq and child.type.endswith("expression"):
+                                    expr_text = self._get_node_text(child).strip()
+                                    inferred = self._extract_initializer_type(expr_text)
+                                    if inferred:
+                                        func_data["return_type"] = inferred
+                                    break
                         
                         if self.index_source:
                             func_data["source"] = source_text

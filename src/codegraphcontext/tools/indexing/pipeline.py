@@ -158,7 +158,7 @@ async def run_tree_sitter_index_async(
         info_logger(
             f"[ORM] Writing {class_table_count} class→table mappings and {query_count} query links..."
         )
-        writer.write_orm_mapping_links(orm_batch)
+        writer.write_orm_mappings(orm_batch)
         writer.write_query_links(orm_batch)
         writer.write_spring_data_repo_links(orm_batch)
 

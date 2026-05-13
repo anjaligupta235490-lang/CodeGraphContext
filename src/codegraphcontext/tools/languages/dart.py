@@ -29,7 +29,6 @@ DART_QUERIES = {
         (selector
             (argument_part (arguments))
         ) @call_selector
-        (identifier) @name
     """,
 
 
@@ -469,11 +468,15 @@ class DartTreeSitterParser:
                 "name": name,
                 "full_name": full_name,
                 "line_number": target_node.start_point[0] + 1,
+                "start_byte": target_node.start_byte, # For sorting
                 "args": args,
                 "context": (context, context_type, context_line),
                 "lang": self.language_name,
                 "is_dependency": False,
             })
+        
+        # Sort by document position
+        calls.sort(key=lambda x: x["start_byte"])
         return calls
 
 
