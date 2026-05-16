@@ -35,8 +35,9 @@ async def run_tree_sitter_index_async(
     if job_id:
         job_manager.update_job(job_id, status=JobStatus.RUNNING)
 
-    writer.add_repository_to_graph(path, is_dependency)
-    repo_name = path.name
+    repo_root = path if path.is_dir() else path.parent.resolve()
+    writer.add_repository_to_graph(repo_root, is_dependency)
+    repo_name = repo_root.name
 
     files, _ignore_root = discover_files_to_index(path, cgcignore_path, supported_extensions=set(parsers.keys()))
 
