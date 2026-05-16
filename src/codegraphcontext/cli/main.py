@@ -544,9 +544,9 @@ def config_db(backend: str = typer.Argument(..., help="Database backend: 'neo4j'
         cgc config db kuzudb
     """
     backend = backend.lower()
-    if backend not in ['falkordb', 'falkordb-remote', 'neo4j', 'kuzudb']:
+    if backend not in ['falkordb', 'falkordb-remote', 'neo4j', 'kuzudb', 'ladybugdb']:
         console.print(f"[bold red]Invalid backend: {backend}[/bold red]")
-        console.print("Must be 'falkordb', 'falkordb-remote', 'neo4j', or 'kuzudb'")
+        console.print("Must be 'falkordb', 'falkordb-remote', 'neo4j', 'kuzudb', or 'ladybugdb'")
         raise typer.Exit(code=1)
     
     updated = config_manager.set_config_value("DEFAULT_DATABASE", backend)
@@ -956,6 +956,15 @@ def doctor():
             else:
                 console.print(f"   [red]✗[/red] KuzuDB is not installed")
                 console.print(f"       Run: pip install kuzu")
+                all_checks_passed = False
+        elif default_db == "ladybugdb":
+            from importlib.util import find_spec
+
+            if find_spec("ladybug") is not None:
+                console.print(f"   [green]✓[/green] LadybugDB core (ladybug) is installed")
+            else:
+                console.print(f"   [red]✗[/red] LadybugDB core (ladybug) is not installed")
+                console.print(f"       Run: pip install ladybug")
                 all_checks_passed = False
         else:
             # FalkorDB

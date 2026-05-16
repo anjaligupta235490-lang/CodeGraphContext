@@ -60,7 +60,7 @@ def _is_nornic_configured() -> bool:
         os.getenv('NORNIC_PASSWORD')
     ])
 
-def get_database_manager(db_path: Optional[str] = None) -> Union['DatabaseManager', 'FalkorDBManager', 'FalkorDBRemoteManager', 'KuzuDBManager', 'NornicDBManager']:
+def get_database_manager(db_path: Optional[str] = None) -> Union['DatabaseManager', 'FalkorDBManager', 'FalkorDBRemoteManager', 'KuzuDBManager', 'NornicDBManager', 'LadybugDBManager']:
     """
     Factory function to get the appropriate database manager based on configuration.
 
@@ -126,8 +126,14 @@ def get_database_manager(db_path: Optional[str] = None) -> Union['DatabaseManage
             from .database_nornic import NornicDBManager
             info_logger("Using Nornic DB (explicit)")
             return NornicDBManager()
+        elif db_type == 'ladybugdb':
+            if not _is_kuzudb_available():
+                raise ValueError("Database set to 'ladybugdb' but LadybugDB core (kuzu) is not installed.\nRun 'pip install kuzu'")
+            from .database_ladybug import LadybugDBManager
+            info_logger(f"Using LadybugDB (explicit) at {db_path or 'default path'}")
+            return LadybugDBManager(db_path=db_path)
         else:
-            raise ValueError(f"Unknown database type: '{db_type}'. Use 'kuzudb', 'falkordb', 'falkordb-remote', 'neo4j', or 'nornic'.")
+            raise ValueError(f"Unknown database type: '{db_type}'. Use 'kuzudb', 'ladybugdb', 'falkordb', 'falkordb-remote', 'neo4j', or 'nornic'.")
 
     # Implicit: remote FalkorDB when FALKORDB_HOST is set (explicit infra signal)
     if _is_falkordb_remote_configured():
@@ -182,6 +188,7 @@ from .database import DatabaseManager
 from .database_falkordb import FalkorDBManager
 from .database_falkordb_remote import FalkorDBRemoteManager
 from .database_kuzu import KuzuDBManager
+from .database_ladybug import LadybugDBManager
 from .database_nornic import NornicDBManager
 
-__all__ = ['DatabaseManager', 'FalkorDBManager', 'FalkorDBRemoteManager', 'KuzuDBManager', 'NornicDBManager', 'get_database_manager']
+__all__ = ['DatabaseManager', 'FalkorDBManager', 'FalkorDBRemoteManager', 'KuzuDBManager', 'LadybugDBManager', 'NornicDBManager', 'get_database_manager']

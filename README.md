@@ -131,7 +131,7 @@ A powerful **MCP server** and **CLI toolkit** that indexes local code into a gra
 -   **Interactive Setup:** A user-friendly command-line wizard for easy setup.
 -   **Dual Mode:** Works as a standalone **CLI toolkit** for developers and as an **MCP server** for AI agents.
 -   **Multi-Language Support:** Full support for 20 programming languages.
--   **Flexible Database Backend:** KuzuDB (Default), FalkorDB Lite (Typical Unix default), FalkorDB Remote, Nornic DB, or Neo4j (all platforms via Docker/native).
+-   **Flexible Database Backend:** KuzuDB (Default), LadybugDB, FalkorDB Lite (Typical Unix default), FalkorDB Remote, Nornic DB, or Neo4j (all platforms via Docker/native).
 
 
 ---
@@ -158,13 +158,13 @@ Each language parser extracts functions, classes, methods, parameters, inheritan
 
 CodeGraphContext supports multiple graph database backends to suit your environment:
 
-| Feature | KuzuDB | FalkorDB Lite | Neo4j / Nornic DB |
-| :--- | :--- | :--- | :--- |
-| **Typical default** | **Standard Default** (embedded, powered by KuzuDB) | **Unix** (Python 3.12+, when `falkordblite` works) | When explicitly configured |
-| **Setup** | Zero-config / Embedded | Zero-config / In-process | Docker / External |
-| **Platform** | **All (Windows Native, macOS, Linux)** | Unix-only (Linux/macOS/WSL) | All Platforms |
-| **Use Case** | Desktop, IDE, Local development | Specialized Unix development | Enterprise, Massive graphs |
-| **Requirement**| `pip install kuzu` | `pip install falkordblite` | Neo4j Server / Docker / Nornic Cloud |
+| Feature | KuzuDB | LadybugDB | FalkorDB Lite | Neo4j / Nornic DB |
+| :--- | :--- | :--- | :--- | :--- |
+| **Typical default** | **Standard Default** (embedded, powered by KuzuDB) | **Specialized Embedded** (similar to Kuzu) | **Unix** (Python 3.12+, when `falkordblite` works) | When explicitly configured |
+| **Setup** | Zero-config / Embedded | Zero-config / Embedded | Zero-config / In-process | Docker / External |
+| **Platform** | **All (Windows Native, macOS, Linux)** | **All (Windows Native, macOS, Linux)** | Unix-only (Linux/macOS/WSL) | All Platforms |
+| **Use Case** | Desktop, IDE, Local development | Custom research projects | Specialized Unix development | Enterprise, Massive graphs |
+| **Requirement**| `pip install kuzu` | `pip install ladybug` | `pip install falkordblite` | Neo4j Server / Docker / Nornic Cloud |
 | **Speed** | ⚡ Extremely Fast | ⚡ Fast | 🚀 Scalable |
 | **Persistence**| Yes (to disk) | Yes (to disk) | Yes (to disk) |
 
