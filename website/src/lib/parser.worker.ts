@@ -29,14 +29,14 @@ async function getLanguageForFile(path: string) {
   const extMatch = path.match(/\.([a-zA-Z0-9]+)$/);
   if (!extMatch) return null;
   const ext = extMatch[1].toLowerCase();
-  
+
   let wasmName = '';
-  switch(ext) {
+  switch (ext) {
     case 'py': wasmName = 'tree-sitter-python.wasm'; break;
     case 'js':
     case 'jsx': wasmName = 'tree-sitter-javascript.wasm'; break;
-    case 'ts': wasmName = 'tree-sitter-typescript.wasm'; break; 
-    case 'tsx': wasmName = 'tree-sitter-tsx.wasm'; break; 
+    case 'ts': wasmName = 'tree-sitter-typescript.wasm'; break;
+    case 'tsx': wasmName = 'tree-sitter-tsx.wasm'; break;
     case 'java': wasmName = 'tree-sitter-java.wasm'; break;
     case 'c':
     case 'h': wasmName = 'tree-sitter-c.wasm'; break;
@@ -64,8 +64,8 @@ async function getLanguageForFile(path: string) {
   try {
     const response = await fetch(`${location.origin}/wasm/${wasmName}`);
     if (!response.ok) {
-        console.warn(`Could not load tree-sitter language: ${wasmName}. Proceeding without it.`);
-        return null;
+      console.warn(`Could not load tree-sitter language: ${wasmName}. Proceeding without it.`);
+      return null;
     }
     const buffer = await response.arrayBuffer();
     const lang = await Language.load(new Uint8Array(buffer));
@@ -92,6 +92,8 @@ interface LangQueries {
   calls: string;
   /** Captures @inherit.base for each base/parent class name */
   inherits: string;
+  /** Captures @var.name for each variable assignment */
+  variables?: string;
 }
 const QUERIES: Record<string, LangQueries> = {
   python: {
@@ -114,6 +116,10 @@ const QUERIES: Record<string, LangQueries> = {
         superclasses: (argument_list
           [ (identifier) @inherit.base
             (attribute attribute: (identifier) @inherit.base) ]))
+    `,
+    variables: `
+      (assignment
+        left: [(identifier) @var.name (attribute attribute: (identifier) @var.name)]) @var.node
     `,
   },
 
@@ -139,6 +145,10 @@ const QUERIES: Record<string, LangQueries> = {
       (new_expression  constructor: (identifier)        @call.name)
     `,
     inherits: ``,
+    variables: `
+      (lexical_declaration (variable_declarator name: (identifier) @var.name))
+      (variable_declaration (variable_declarator name: (identifier) @var.name))
+    `,
   },
 
   typescript: {
@@ -167,6 +177,10 @@ const QUERIES: Record<string, LangQueries> = {
                          property: (property_identifier)       @call.name))
     `,
     inherits: ``,
+    variables: `
+      (lexical_declaration (variable_declarator name: (identifier) @var.name))
+      (variable_declaration (variable_declarator name: (identifier) @var.name))
+    `,
   },
 
   java: {
@@ -191,6 +205,9 @@ const QUERIES: Record<string, LangQueries> = {
       (interface_declaration
         (extends_interfaces (type_list (type_identifier) @inherit.base)))
     `,
+    variables: `
+      (field_declaration declarator: (variable_declarator name: (identifier) @var.name))
+    `,
   },
 
 
@@ -208,6 +225,9 @@ const QUERIES: Record<string, LangQueries> = {
       (call_expression function: (identifier) @call.name)
     `,
     inherits: ``,
+    variables: `
+      (declaration declarator: (identifier) @var.name)
+    `,
   },
 
   cpp: {
@@ -234,6 +254,9 @@ const QUERIES: Record<string, LangQueries> = {
         (base_class_clause
           (type_identifier) @inherit.base))
     `,
+    variables: `
+      (declaration declarator: [(identifier) @var.name (field_identifier) @var.name])
+    `,
   },
 
   go: {
@@ -251,6 +274,10 @@ const QUERIES: Record<string, LangQueries> = {
                          field: (field_identifier)   @call.name))
     `,
     inherits: ``,
+    variables: `
+      (var_spec name: (identifier) @var.name)
+      (short_var_declaration left: (expression_list (identifier) @var.name))
+    `,
   },
 
   rust: {
@@ -273,6 +300,10 @@ const QUERIES: Record<string, LangQueries> = {
         ])
     `,
     inherits: ``,
+    variables: `
+      (let_declaration pattern: (identifier) @var.name)
+      (const_declaration name: (identifier) @var.name)
+    `,
   },
 
   ruby: {
@@ -292,6 +323,9 @@ const QUERIES: Record<string, LangQueries> = {
     `,
     inherits: `
       (class (superclass (constant) @inherit.base))
+    `,
+    variables: `
+      (assignment left: (identifier) @var.name)
     `,
   },
 
@@ -314,6 +348,9 @@ const QUERIES: Record<string, LangQueries> = {
     `,
     inherits: `
       (class_declaration (base_clause (name) @inherit.base))
+    `,
+    variables: `
+      (variable_declaration (variable_name (name) @var.name))
     `,
   },
 
@@ -408,21 +445,21 @@ const QUERIES: Record<string, LangQueries> = {
 function getLanguageQueryKey(path: string): string | null {
   const ext = path.match(/\.([a-zA-Z0-9]+)$/)?.[1]?.toLowerCase();
   switch (ext) {
-    case 'py':                          return 'python';
-    case 'js': case 'jsx':              return 'javascript';
-    case 'ts': case 'tsx':              return 'typescript';
-    case 'java':                        return 'java';
-    case 'c':  case 'h':               return 'c';
+    case 'py': return 'python';
+    case 'js': case 'jsx': return 'javascript';
+    case 'ts': case 'tsx': return 'typescript';
+    case 'java': return 'java';
+    case 'c': case 'h': return 'c';
     case 'cpp': case 'hpp': case 'cc': return 'cpp';
-    case 'go':                          return 'go';
-    case 'rs':                          return 'rust';
-    case 'rb':                          return 'ruby';
-    case 'php':                         return 'php';
-    case 'kt': case 'kts':             return 'kotlin';
-    case 'dart':                        return 'dart';
-    case 'cs':                          return 'csharp';
-    case 'swift':                       return 'swift';
-    case 'pl': case 'pm':              return 'perl';
+    case 'go': return 'go';
+    case 'rs': return 'rust';
+    case 'rb': return 'ruby';
+    case 'php': return 'php';
+    case 'kt': case 'kts': return 'kotlin';
+    case 'dart': return 'dart';
+    case 'cs': return 'csharp';
+    case 'swift': return 'swift';
+    case 'pl': case 'pm': return 'perl';
     default: return null;
   }
 }
@@ -436,9 +473,43 @@ function getNodeDisplayLabel(nodeType: string): string {
   if (lower.includes('enum')) return 'Enum';
   if (lower.includes('module')) return 'Module';
   if (lower.includes('struct')) return 'Struct';
+  if (lower.includes('variable')) return 'Variable';
   if (lower.includes('impl')) return 'Class';
   if (lower.includes('function') || lower.includes('method') || lower.includes('subroutine')) return 'Function';
   return 'Function';
+}
+
+function calculateComplexity(node: any): number {
+  const complexityNodes = new Set([
+    "if_statement", "for_statement", "while_statement", "except_clause",
+    "with_statement", "boolean_operator", "list_comprehension",
+    "generator_expression", "case_clause", "conditional_expression",
+    "binary_expression" // for logical ops in some langs
+  ]);
+
+  let count = 1;
+  function traverse(n: any) {
+    if (complexityNodes.has(n.type)) count++;
+    for (let i = 0; i < n.childCount; i++) {
+      traverse(n.child(i));
+    }
+  }
+  traverse(node);
+  return count;
+}
+
+function getPythonDocstring(node: any): string | null {
+  // Python docstring is the first expression statement if it's a string
+  const body = node.childForFieldName('body');
+  if (!body || body.childCount === 0) return null;
+  const first = body.child(0);
+  if (first?.type === 'expression_statement') {
+    const strNode = first.child(0);
+    if (strNode?.type === 'string') {
+      return strNode.text.replace(/['"]+/g, '').trim();
+    }
+  }
+  return null;
 }
 
 function valForLabel(label: string): number {
@@ -446,6 +517,7 @@ function valForLabel(label: string): number {
     case 'Class': case 'Interface': case 'Trait': case 'Struct': return 8;
     case 'Enum': return 7;
     case 'Module': return 9;
+    case 'Variable': return 4;
     default: return 6;
   }
 }
@@ -480,7 +552,7 @@ let processedCount = 0;
 
 const nodes: any[] = [];
 const links: any[] = [];
-const nodeSymbolIndex = new Map<string, number[]>(); 
+const nodeSymbolIndex = new Map<string, number[]>();
 const filePathToNodeId = new Map<string, number>();
 const folderNodes = new Map<string, number>(); // relative folder path → node id
 const fileCalls = new Map<number, Set<string>>();
@@ -488,6 +560,7 @@ const inheritances = new Map<number, string[]>();
 let nodeIdSequence = 1;
 let repoId = -1;
 let repoRootPrefix = ''; // common path prefix stripped before building folder hierarchy
+let indexOptions: { indexVariables?: boolean } = { indexVariables: true };
 
 /**
  * Compute the longest common directory prefix of all queued file paths.
@@ -553,11 +626,14 @@ function getOrCreateFolderChain(filePath: string): number {
 
 self.onmessage = async (e) => {
   const { type, files } = e.data;
-  
+
   if (type === 'ADD_FILES') {
     pendingFileQueue.push(...files);
     totalFiles += files.length;
   } else if (type === 'START') {
+    if (e.data.options) {
+      indexOptions = { ...indexOptions, ...e.data.options };
+    }
     try {
       await initParser();
       // Compute common path prefix BEFORE building any nodes, so folder
@@ -602,31 +678,31 @@ async function processNextBatch() {
     // Cross-linking phase
     self.postMessage({ type: 'PROGRESS', payload: { msg: "Building high-fidelity relationships...", percent: 95 } });
     await new Promise(r => setTimeout(r, 0));
-    
+
     const MAX_CALL_EDGES = 50000;
     let callsAdded = 0;
     for (const [callerId, calls] of fileCalls.entries()) {
-       if (callsAdded >= MAX_CALL_EDGES) break;
-       const callerFile = nodes[callerId - 1]?.file;
-       for (const calledName of calls) {
-          const targetId = resolveSymbol(`Function:${calledName}`, callerFile) || 
-                           resolveSymbol(`Class:${calledName}`, callerFile) || 
-                           resolveSymbol(calledName, callerFile);
-          if (targetId && targetId !== callerId) {
-             links.push({ source: callerId, target: targetId, type: 'CALLS' });
-             callsAdded++;
-             if (callsAdded >= MAX_CALL_EDGES) break;
-          }
-       }
+      if (callsAdded >= MAX_CALL_EDGES) break;
+      const callerFile = nodes[callerId - 1]?.file;
+      for (const calledName of calls) {
+        const targetId = resolveSymbol(`Function:${calledName}`, callerFile) ||
+          resolveSymbol(`Class:${calledName}`, callerFile) ||
+          resolveSymbol(calledName, callerFile);
+        if (targetId && targetId !== callerId) {
+          links.push({ source: callerId, target: targetId, type: 'CALLS' });
+          callsAdded++;
+          if (callsAdded >= MAX_CALL_EDGES) break;
+        }
+      }
     }
     for (const [classId, bases] of inheritances.entries()) {
-       const classFile = nodes[classId - 1]?.file;
-       for (const baseName of bases) {
-          const targetId = resolveSymbol(`Class:${baseName}`, classFile) || resolveSymbol(baseName, classFile);
-          if (targetId) links.push({ source: classId, target: targetId, type: 'INHERITS' });
-       }
+      const classFile = nodes[classId - 1]?.file;
+      for (const baseName of bases) {
+        const targetId = resolveSymbol(`Class:${baseName}`, classFile) || resolveSymbol(baseName, classFile);
+        if (targetId) links.push({ source: classId, target: targetId, type: 'INHERITS' });
+      }
     }
-    
+
     const pm = (performance as any).memory;
     if (pm) {
       console.log(`[Worker RAM Pre-PostMessage] ${(pm.usedJSHeapSize / 1048576).toFixed(1)} MB used.`);
@@ -637,28 +713,28 @@ async function processNextBatch() {
     self.postMessage({ type: 'DONE', payload: { nodes, links, files: filePaths } });
     return;
   }
-  
+
   // Smaller batch = less peak memory per tick; GC gets more breathing room
   const batch = pendingFileQueue.splice(0, 10);
-  
+
   for (let i = 0; i < batch.length; i++) {
     const f = batch[i];
     processedCount++;
-    
+
     if (processedCount % 5 === 0) {
       const pm = (performance as any).memory;
       const memStr = pm ? ` [RAM: ${(pm.usedJSHeapSize / 1048576).toFixed(1)}MB]` : "";
-      self.postMessage({ 
-        type: 'PROGRESS', 
-        payload: { 
-          msg: `Indexing: ${f.path.split('/').pop()}${memStr}...`, 
-          percent: 50 + Math.floor((processedCount / totalFiles) * 40) 
-        } 
+      self.postMessage({
+        type: 'PROGRESS',
+        payload: {
+          msg: `Indexing: ${f.path.split('/').pop()}${memStr}...`,
+          percent: 50 + Math.floor((processedCount / totalFiles) * 40)
+        }
       });
     }
 
     const IGNORED_DIRS = new Set([
-      'node_modules', '.git', '.github', 'dist', 'build', 'out', 'coverage', 
+      'node_modules', '.git', '.github', 'dist', 'build', 'out', 'coverage',
       '.next', '.nuxt', '__pycache__', 'venv', '.venv', 'env', '.env', '.tox',
       'eggs', 'target', '.gradle', '.idea', 'cmake-build-debug', 'bin', 'obj',
       'packages', 'vendor', 'Pods', '.build', 'DerivedData', '.dart_tool',
@@ -674,7 +750,7 @@ async function processNextBatch() {
     if (pm2 && pm2.usedJSHeapSize > 900 * 1048576) {
       await new Promise(r => setTimeout(r, 0));
     }
-    
+
     const fileName = f.path.split(/[\/\\]/).pop() || f.path;
     const fileId = addNode(fileName, 'File', f.path, 10);
     filePathToNodeId.set(f.path, fileId);
@@ -725,9 +801,42 @@ async function processNextBatch() {
           const name = nodeToName.get(nodeId);
           if (!name || name.length <= 1) continue;
           const label = getNodeDisplayLabel(meta.nodeType);
-          const val   = valForLabel(label);
-          const defId = addNode(name, label, f.path, val, { line_number: meta.node.startPosition.row + 1 });
+          const val = valForLabel(label);
+
+          const extra: any = { line_number: meta.node.startPosition.row + 1 };
+
+          // Python-specific extractions
+          if (queryKey === 'python') {
+            const complexity = calculateComplexity(meta.node);
+            extra.complexity = complexity;
+            const docstring = getPythonDocstring(meta.node);
+            if (docstring) extra.docstring = docstring;
+
+            // Decorators
+            const decorators: string[] = [];
+            let parent = meta.node.parent;
+            if (parent?.type === 'decorated_definition') {
+              for (let i = 0; i < parent.childCount; i++) {
+                const c = parent.child(i);
+                if (c.type === 'decorator') decorators.push(c.text.trim());
+              }
+            }
+            if (decorators.length) extra.decorators = decorators;
+          }
+
+          const defId = addNode(name, label, f.path, val, extra);
           links.push({ source: fileId, target: defId, type: 'CONTAINS' });
+        }
+      }
+
+      // 1.5 VARIABLES (New)
+      if (indexOptions.indexVariables && queries.variables) {
+        for (const cap of queries.variables.captures(root)) {
+          if (cap.name !== 'var.name') continue;
+          const name = cap.node.text;
+          if (!name || name.length <= 1) continue;
+          const varId = addNode(name, 'Variable', f.path, 4, { line_number: cap.node.startPosition.row + 1 });
+          links.push({ source: fileId, target: varId, type: 'CONTAINS' });
         }
       }
 
@@ -771,7 +880,7 @@ async function processNextBatch() {
                 ['identifier', 'type_identifier', 'name', 'constant'].includes(c.type));
               if (nameNode) {
                 classNodeId = resolveSymbol(`Class:${nameNode.text}`, f.path) ??
-                              resolveSymbol(`Interface:${nameNode.text}`, f.path);
+                  resolveSymbol(`Interface:${nameNode.text}`, f.path);
               }
               break;
             }
@@ -788,11 +897,11 @@ async function processNextBatch() {
       console.warn(`[parser.worker] Failed parsing or executing queries on ${f.path}:`, e);
     } finally {
       if (tree) {
-        try { tree.delete(); } catch(e) {}
+        try { tree.delete(); } catch (e) { }
       }
     }
   }
-  
+
   // Yield to worker event loop
   setTimeout(processNextBatch, 0);
 }

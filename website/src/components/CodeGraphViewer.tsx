@@ -1510,8 +1510,12 @@ export default function CodeGraphViewer({ data, onClose }: { data: any, onClose:
             height={dimensions.height}
             backgroundColor={pal.canvasBg}
             nodeThreeObject={graph3dNodeThreeObject}
-            nodeThreeObjectExtend={false}
-            nodeLabel={(n: any) => `${n.type}: ${n.name}`}
+            nodeLabel={(n: any) => {
+              let label = `${n.type}: ${n.name}`;
+              if (n.complexity) label += `\nComplexity: ${n.complexity}`;
+              if (n.docstring) label += `\n\n${n.docstring.slice(0, 100)}${n.docstring.length > 100 ? '...' : ''}`;
+              return label;
+            }}
             linkColor={graph3dLinkColor}
             linkWidth={lineWidth * 0.5}
             linkOpacity={0.4}
@@ -1540,7 +1544,13 @@ export default function CodeGraphViewer({ data, onClose }: { data: any, onClose:
             graphData={filteredData}
             width={dimensions.width - effectiveSidebarW - effectiveCodePanelW}
             height={dimensions.height}
-            nodeLabel="name"
+            nodeLabel={(n: any) => {
+              let label = `${n.type}: ${n.name}`;
+              if (n.complexity) label += ` (Complexity: ${n.complexity})`;
+              if (n.decorators?.length) label += `\n@${n.decorators.join('\n@')}`;
+              if (n.docstring) label += `\n\n${n.docstring.slice(0, 150)}${n.docstring.length > 150 ? '...' : ''}`;
+              return label;
+            }}
             linkCurvature={graphMode === 'curvy' ? 0.25 : 0}
             linkColor={getLinkColor}
             linkWidth={
@@ -1705,21 +1715,42 @@ export default function CodeGraphViewer({ data, onClose }: { data: any, onClose:
                       {fileEntities.map((n: any) => {
                         const lineNum = n.line_number ?? n.properties?.line_number;
                         return (
-                          <div
-                            key={n.id}
-                            onClick={() => { if (lineNum && codeContent) { setHighlightLine(Number(lineNum)); setCodePanelTab('code'); } }}
-                            className={`flex items-center gap-2 py-1.5 px-2 rounded-lg ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'} ${lineNum && codeContent ? 'cursor-pointer' : ''}`}
-                          >
-                            {graphMode === 'icon' ? (
-                              <span className="text-[14px] flex-shrink-0">{EMOJI_MAP[n.type] || '❓'}</span>
-                            ) : (
-                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: nodeColors[n.type] || '#78909c' }} />
+                          <>
+                            <div
+                              key={n.id}
+                              onClick={() => { if (lineNum && codeContent) { setHighlightLine(Number(lineNum)); setCodePanelTab('code'); } }}
+                              className={`flex items-center gap-2 py-1.5 px-2 rounded-lg ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'} ${lineNum && codeContent ? 'cursor-pointer' : ''}`}
+                            >
+                              {graphMode === 'icon' ? (
+                                <span className="text-[14px] flex-shrink-0">{EMOJI_MAP[n.type] || '❓'}</span>
+                              ) : (
+                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: nodeColors[n.type] || '#78909c' }} />
+                              )}
+                              <span className="text-[12px] font-medium truncate" style={{ color: pal.textSecondary }}>{n.name}</span>
+                              <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
+                                {n.complexity && (
+                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${n.complexity > 10 ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
+                                    C:{n.complexity}
+                                  </span>
+                                )}
+                                <span className="text-[9px] uppercase tracking-wider" style={{ color: pal.dimText }}>
+                                  {n.type}{lineNum ? `:${lineNum}` : ''}
+                                </span>
+                              </div>
+                            </div>
+                            {n.decorators?.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1 px-2">
+                                {n.decorators.map((d: string, i: number) => (
+                                  <span key={i} className="text-[8px] px-1 py-0.5 rounded bg-blue-500/10 text-blue-400 font-mono">@{d.replace(/^@/, '')}</span>
+                                ))}
+                              </div>
                             )}
-                            <span className="text-[12px] font-medium truncate" style={{ color: pal.textSecondary }}>{n.name}</span>
-                            <span className="text-[9px] uppercase tracking-wider ml-auto flex-shrink-0" style={{ color: pal.dimText }}>
-                              {n.type}{lineNum ? `:${lineNum}` : ''}
-                            </span>
-                          </div>
+                            {n.docstring && (
+                              <div className="mt-1 px-2 text-[9px] text-gray-500 line-clamp-2 italic">
+                                "{n.docstring}"
+                              </div>
+                            )}
+                          </>
                         );
                       })}
                     </div>

@@ -23,6 +23,7 @@ export default function LocalUploader({ onComplete }: { onComplete: (data: unkno
   const [progress, setProgress] = useState({ text: "", value: 0 });
   const [activeTab, setActiveTab] = useState<'folder' | 'zip' | 'github'>('folder');
   const [githubUrl, setGithubUrl] = useState("");
+  const [indexVariables, setIndexVariables] = useState(false);
 
   const processFiles = async (files: { path: string, content: string }[]) => {
     // Build fileContents map before the worker clears content for memory
@@ -35,7 +36,11 @@ export default function LocalUploader({ onComplete }: { onComplete: (data: unkno
     await new Promise(r => setTimeout(r, 800));
     
     setProgress({ text: "Initializing WebAssembly tree-sitter...", value: 80 });
-    const graphData = await parseFilesIntoGraph(files, (msg, val) => setProgress({ text: msg, value: val }));
+    const graphData = await parseFilesIntoGraph(
+      files, 
+      (msg, val) => setProgress({ text: msg, value: val }),
+      { indexVariables }
+    );
     
     setProgress({ text: "Complete!", value: 100 });
     await new Promise(r => setTimeout(r, 400));
@@ -219,6 +224,16 @@ export default function LocalUploader({ onComplete }: { onComplete: (data: unkno
               </Button>
             </motion.div>
           )}
+          
+          {/* Index Options */}
+          <div className="mt-8 flex items-center gap-2 cursor-pointer group" onClick={() => setIndexVariables(!indexVariables)}>
+            <div className={`w-4 h-4 rounded border transition-all flex items-center justify-center ${indexVariables ? 'bg-purple-500 border-purple-500' : 'border-white/20 bg-white/5'}`}>
+              {indexVariables && <div className="w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_5px_#fff]" />}
+            </div>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400 group-hover:text-gray-300 transition-colors">
+              Index High-Fidelity Variables (Higher Compute)
+            </span>
+          </div>
           
         </div>
       ) : (
