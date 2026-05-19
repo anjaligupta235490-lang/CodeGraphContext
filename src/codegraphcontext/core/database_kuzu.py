@@ -598,8 +598,8 @@ class KuzuSessionWrapper:
                             try:
                                 last_result = self.run(loop_query, **loop_params)
                             except Exception as nested_e:
-                                nested_err_str = str(nested_e)
-                                if "Binder exception" in nested_err_str or "binder exception" in nested_err_str.lower():
+                                nested_err_str = str(nested_e).lower()
+                                if "binder" in nested_err_str or "cannot find a valid label" in nested_err_str:
                                     continue
                                 raise nested_e
                         return last_result or KuzuResultWrapper(None)

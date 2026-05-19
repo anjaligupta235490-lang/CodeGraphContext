@@ -93,3 +93,4 @@ site/
 target/
 venv_indexing/
 scratch/
+scripts/

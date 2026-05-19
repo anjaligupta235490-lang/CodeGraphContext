@@ -13,6 +13,12 @@ from ....utils.git_utils import get_repo_commit_hash
 from ..sanitize import sanitize_props
 
 
+def _is_binder_exception(e: Exception) -> bool:
+    err_str = str(e).lower()
+    return "binder" in err_str or "cannot find a valid label" in err_str
+
+
+
 class GraphWriter:
     """Persists repository/file/symbol nodes and relationships via the Neo4j-like driver API."""
 
@@ -305,7 +311,7 @@ class GraphWriter:
                             file_path=file_path_str,
                         )
                     except Exception as e:
-                        if "Binder exception" in str(e):
+                        if _is_binder_exception(e):
                             continue
                         raise e
 
@@ -627,7 +633,7 @@ class GraphWriter:
                     try:
                         session.run(q, batch=batch)
                     except Exception as e:
-                        if "Binder exception" in str(e):
+                        if _is_binder_exception(e):
                             # Skip unsupported label combinations in KuzuDB
                             continue
                         raise e
@@ -686,7 +692,7 @@ class GraphWriter:
                                     interface_name=base_name,
                                 )
                             except Exception as e:
-                                if "Binder exception" in str(e) or "binder exception" in str(e).lower():
+                                if _is_binder_exception(e):
                                     continue
                                 raise e
                     else:
@@ -706,7 +712,7 @@ class GraphWriter:
                                         parent_name=base_name,
                                     )
                                 except Exception as e:
-                                    if "Binder exception" in str(e) or "binder exception" in str(e).lower():
+                                    if _is_binder_exception(e):
                                         continue
                                     raise e
 
@@ -743,7 +749,7 @@ class GraphWriter:
                             batch=internal_batch,
                         )
                     except Exception as e:
-                        if "Binder exception" in str(e):
+                        if _is_binder_exception(e):
                             continue
                         raise e
 
@@ -761,7 +767,7 @@ class GraphWriter:
                         batch=external_batch,
                     )
                 except Exception as e:
-                    if "Binder exception" in str(e):
+                    if _is_binder_exception(e):
                         continue
                     raise e
 
