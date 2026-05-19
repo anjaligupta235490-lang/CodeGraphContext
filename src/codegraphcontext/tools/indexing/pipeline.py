@@ -66,19 +66,22 @@ async def run_tree_sitter_index_async(
             
             repo_path = path.resolve() if path.is_dir() else file.parent.resolve()
             
-            # 1. Parse file (CPU bound, run in thread)
-            file_data = await asyncio.to_thread(parse_file, repo_path, file, is_dependency)
-            
-            # 2. Write to graph (I/O bound, run in thread)
-            if "error" not in file_data:
-                await asyncio.to_thread(
-                    writer.add_file_to_graph, 
-                    file_data, repo_name, imports_map, 
-                    repo_path_str=resolved_repo_path_str
-                )
-                return file_data
-            elif not file_data.get("unsupported"):
-                await asyncio.to_thread(add_minimal_file_node, file, repo_path, is_dependency)
+            try:
+                # 1. Parse file (CPU bound, run in thread)
+                file_data = await asyncio.to_thread(parse_file, repo_path, file, is_dependency)
+                
+                # 2. Write to graph (I/O bound, run in thread)
+                if "error" not in file_data:
+                    await asyncio.to_thread(
+                        writer.add_file_to_graph, 
+                        file_data, repo_name, imports_map, 
+                        repo_path_str=resolved_repo_path_str
+                    )
+                    return file_data
+                elif not file_data.get("unsupported"):
+                    await asyncio.to_thread(add_minimal_file_node, file, repo_path, is_dependency)
+            except Exception as e:
+                error_logger(f"Error indexing file {file}: {e}")
             
             return None
 

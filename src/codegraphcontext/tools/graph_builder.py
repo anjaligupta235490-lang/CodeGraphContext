@@ -907,38 +907,12 @@ class GraphBuilder:
 
     def estimate_processing_time(self, path: Path) -> Optional[Tuple[int, float]]:
         try:
-            supported_extensions = set(self.parsers.keys()) | self.generic_extensions
-            if path.is_file():
-                if path.suffix in supported_extensions or path.name in self.generic_filenames:
-                    files = [path]
-                else:
-                    return 0, 0.0
-            else:
-                all_files = path.rglob("*")
-                files = []
-                for f in all_files:
-                    if not f.is_file():
-                        continue
-                    ext = f.suffix
-                    if f.name.endswith(".d.ts"):
-                        ext = ".d.ts"
-                    if ext in supported_extensions or f.name in self.generic_filenames:
-                        files.append(f)
-
-                ignore_dirs_str = get_config_value("IGNORE_DIRS") or ""
-                if ignore_dirs_str:
-                    ignore_dirs = {d.strip().lower() for d in ignore_dirs_str.split(",") if d.strip()}
-                    if ignore_dirs:
-                        kept_files = []
-                        for f in files:
-                            try:
-                                parts = set(p.lower() for p in f.relative_to(path).parent.parts)
-                                if not parts.intersection(ignore_dirs):
-                                    kept_files.append(f)
-                            except ValueError:
-                                kept_files.append(f)
-                        files = kept_files
-
+            from codegraphcontext.tools.indexing.discovery import discover_files_to_index
+            supported_extensions = set(self.parsers.keys())
+            files, _ = discover_files_to_index(
+                path,
+                supported_extensions=supported_extensions,
+            )
             total_files = len(files)
             estimated_time = total_files * 0.05
             return total_files, estimated_time

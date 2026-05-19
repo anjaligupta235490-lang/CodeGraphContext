@@ -153,6 +153,7 @@ def test_sanitize_value_deduplicates_identical_batch_rows():
 def test_import_batch_rewrite_sets_missing_full_import_name():
     conn = _FakeConn()
     session = KuzuSessionWrapper(conn)
+    session._skip_unwind_fallback = True
 
     session.run(
         """

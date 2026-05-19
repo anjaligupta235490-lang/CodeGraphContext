@@ -113,11 +113,13 @@ class RepositoryEventHandler(FileSystemEventHandler):
         return path_obj.is_file() and path_obj.suffix in self.graph_builder.parsers and not self._should_ignore(path_obj)
 
     def _iter_supported_files(self) -> list[Path]:
+        from codegraphcontext.tools.indexing.discovery import discover_files_to_index
         supported_extensions = self.graph_builder.parsers.keys()
-        return [
-            f for f in self.repo_path.rglob("*")
-            if f.is_file() and f.suffix in supported_extensions and not self._should_ignore(f)
-        ]
+        files, _ = discover_files_to_index(
+            self.repo_path,
+            supported_extensions=set(supported_extensions),
+        )
+        return files
 
     def _initial_scan(self):
         """Scans the entire repository, parses all files, and builds the initial graph."""
