@@ -22,7 +22,7 @@ export default async function handler(req: any, res: any) {
     openapi: "3.1.0",
     info: {
       title: "CodeGraphContext Tunneling API",
-      description: "Zero-server-compute API that tunnels semantic queries directly to Kuzu WASM running in the user's active browser tab. Queries classes, functions, calls, and file structural containment maps locally.",
+      description: "Zero-server-compute API that tunnels structural semantic code queries directly to Kuzu WASM and Pyodide running inside the user's browser dashboard.",
       version: "1.0.0"
     },
     servers: [
@@ -35,7 +35,7 @@ export default async function handler(req: any, res: any) {
       "/api/v1/query": {
         get: {
           summary: "Execute Tunneled Code Graph Query",
-          description: "Tunnels queries directly to the client's browser Kuzu WASM graph database. Queries code structures, tracers, and definitions in real-time.",
+          description: "Tunnels standard Cypher queries or direct relationships (definitions, callers, callees, search, file structure) directly to Kuzu WASM.",
           operationId: "querySemanticGraph",
           parameters: [
             {
@@ -43,9 +43,7 @@ export default async function handler(req: any, res: any) {
               in: "query",
               description: "GitHub repository path in 'owner/repo' format (e.g. 'requests/requests').",
               required: true,
-              schema: {
-                type: "string"
-              }
+              schema: { type: "string" }
             },
             {
               name: "query_type",
@@ -60,58 +58,441 @@ export default async function handler(req: any, res: any) {
             {
               name: "target",
               in: "query",
-              description: "The name of the target symbol to find (required for 'definitions', 'callers', 'callees', 'search').",
+              description: "The target class or function name to locate (required for definitions, callers, callees).",
               required: false,
-              schema: {
-                type: "string"
-              }
+              schema: { type: "string" }
             },
             {
               name: "cypher_query",
               in: "query",
-              description: "Standard Cypher query string if 'query_type' is 'cypher'.",
+              description: "Full Cypher query string if 'query_type' is 'cypher'.",
               required: false,
-              schema: {
-                type: "string"
-              }
+              schema: { type: "string" }
             }
           ],
           responses: {
             "200": {
-              description: "Query successfully executed in browser Kuzu WASM database",
+              description: "Query executed successfully",
               content: {
                 "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      status: { type: "string" },
-                      query_type: { type: "string" },
-                      target: { type: "string" },
-                      data: {
-                        type: "array",
-                        items: {
-                          type: "object"
-                        }
-                      }
-                    }
-                  }
+                  schema: { type: "object" }
                 }
               }
+            }
+          }
+        }
+      },
+      "/api/v1/query/find_dead_code": {
+        get: {
+          summary: "Find Dead Code",
+          description: "Natively executes Python dead-code analysis in browser Pyodide. Detects unreferenced classes, functions, and symbols in the project.",
+          operationId: "findDeadCode",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              description: "GitHub repository in 'owner/repo' format (e.g. 'requests/requests').",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Dead code analysis completed successfully",
+              content: {
+                "application/json": {
+                  schema: { type: "object" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/query/calculate_cyclomatic_complexity": {
+        get: {
+          summary: "Calculate Cyclomatic Complexity",
+          description: "Runs complexity evaluations in Pyodide on all function bodies inside the repository.",
+          operationId: "calculateCyclomaticComplexity",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              description: "GitHub repository in 'owner/repo' format (e.g. 'requests/requests').",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Complexity metrics returned successfully",
+              content: {
+                "application/json": {
+                  schema: { type: "object" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/query/find_most_complex_functions": {
+        get: {
+          summary: "Find Most Complex Functions",
+          description: "Identifies hot spots of complexity in code, listing the functions with the highest complexity scores.",
+          operationId: "findMostComplexFunctions",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              description: "GitHub repository in 'owner/repo' format (e.g. 'requests/requests').",
+              required: true,
+              schema: { type: "string" }
             },
-            "412": {
-              description: "Browser dashboard is offline/closed",
+            {
+              name: "limit",
+              in: "query",
+              description: "Maximum number of functions to return (default is 10).",
+              required: false,
+              schema: { type: "integer", default: 10 }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Most complex functions retrieved successfully",
               content: {
                 "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      status: { type: "string" },
-                      error: { type: "string" },
-                      message: { type: "string" }
-                    }
-                  }
+                  schema: { type: "object" }
                 }
               }
+            }
+          }
+        }
+      },
+      "/api/v1/query/analyze_code_relationships": {
+        get: {
+          summary: "Analyze Code Relationships",
+          description: "Examines call coupling, class inheritances, imports, and referencing across symbols in the repository.",
+          operationId: "analyzeCodeRelationships",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              description: "GitHub repository in 'owner/repo' format (e.g. 'requests/requests').",
+              required: true,
+              schema: { type: "string" }
+            },
+            {
+              name: "symbol",
+              in: "query",
+              description: "Target symbol name to inspect relationships for.",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Relationships analyzed successfully",
+              content: {
+                "application/json": {
+                  schema: { type: "object" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/query/get_repository_stats": {
+        get: {
+          summary: "Get Repository Stats",
+          description: "Retrieves global graph metrics (counts of files, classes, methods, and relationship linkages).",
+          operationId: "getRepositoryStats",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              description: "GitHub repository in 'owner/repo' format (e.g. 'requests/requests').",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Stats retrieved successfully",
+              content: {
+                "application/json": {
+                  schema: { type: "object" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/v1/query/watch_directory": {
+        get: {
+          summary: "Watch Directory",
+          description: "Instructs the indexer to monitor a folder for real-time changes.",
+          operationId: "watchDirectory",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              description: "Target repository path.",
+              required: true,
+              schema: { type: "string" }
+            },
+            {
+              name: "path",
+              in: "query",
+              description: "Absolute folder path to watch.",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Directory watch initiated successfully"
+            }
+          }
+        }
+      },
+      "/api/v1/query/unwatch_directory": {
+        get: {
+          summary: "Unwatch Directory",
+          description: "Removes folder from indexer monitoring.",
+          operationId: "unwatchDirectory",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            },
+            {
+              name: "path",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Directory unwatched successfully"
+            }
+          }
+        }
+      },
+      "/api/v1/query/list_watched_paths": {
+        get: {
+          summary: "List Watched Paths",
+          description: "Lists all directories currently monitored by the indexer.",
+          operationId: "listWatchedPaths",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Paths list returned successfully"
+            }
+          }
+        }
+      },
+      "/api/v1/query/add_code_to_graph": {
+        get: {
+          summary: "Add Code File to Graph",
+          description: "Manually indexes a single file directly into the active database graph.",
+          operationId: "addCodeToGraph",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            },
+            {
+              name: "file_path",
+              in: "query",
+              description: "Relative file path.",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "File successfully added to graph"
+            }
+          }
+        }
+      },
+      "/api/v1/query/add_package_to_graph": {
+        get: {
+          summary: "Add External Package to Graph",
+          description: "Imports and indexes an external dependency/package into the graph.",
+          operationId: "addPackageToGraph",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            },
+            {
+              name: "package_name",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Package successfully indexed"
+            }
+          }
+        }
+      },
+      "/api/v1/query/load_bundle": {
+        get: {
+          summary: "Load Pre-Built Graph Bundle",
+          description: "Loads a graph bundle file.",
+          operationId: "loadBundle",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            },
+            {
+              name: "bundle_path",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Bundle loaded successfully"
+            }
+          }
+        }
+      },
+      "/api/v1/query/search_registry_bundles": {
+        get: {
+          summary: "Search Central Registry Bundles",
+          description: "Queries the central CGC registry for pre-indexed code bases.",
+          operationId: "searchRegistryBundles",
+          parameters: [
+            {
+              name: "query",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Search results returned successfully"
+            }
+          }
+        }
+      },
+      "/api/v1/query/discover_codegraph_contexts": {
+        get: {
+          summary: "Discover Code Graph Contexts",
+          description: "Scans for available context boundaries and focal frameworks.",
+          operationId: "discoverCodegraphContexts",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Context boundaries discovered successfully"
+            }
+          }
+        }
+      },
+      "/api/v1/query/switch_context": {
+        get: {
+          summary: "Switch Focus Context",
+          description: "Changes the active focus boundaries inside the graph analyzer.",
+          operationId: "switchContext",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            },
+            {
+              name: "context_name",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Active context changed successfully"
+            }
+          }
+        }
+      },
+      "/api/v1/query/generate_report": {
+        get: {
+          summary: "Generate Code Intelligence Report",
+          description: "Compiles a comprehensive, formatted code analytics report.",
+          operationId: "generateReport",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Report compiled successfully"
+            }
+          }
+        }
+      },
+      "/api/v1/query/delete_repository": {
+        get: {
+          summary: "Delete Repository Graph Data",
+          description: "Completely wipes out indexed databases and relationship nodes.",
+          operationId: "deleteRepository",
+          parameters: [
+            {
+              name: "repo",
+              in: "query",
+              required: true,
+              schema: { type: "string" }
+            }
+          ],
+          responses: {
+            "200": {
+              description: "Graph database purged successfully"
+            }
+          }
+        }
+      },
+      "/api/v1/query/list_indexed_repositories": {
+        get: {
+          summary: "List Indexed Repositories",
+          description: "Scans and returns all repository graphs indexed inside local WASM storage.",
+          operationId: "listIndexedRepositories",
+          responses: {
+            "200": {
+              description: "Indexed repository list returned successfully"
             }
           }
         }
