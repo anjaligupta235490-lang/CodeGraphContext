@@ -40,11 +40,19 @@ export default async function handler(req: any, res: any) {
 
   const supabase = createClient(supabaseUrl, supabaseAnonKey);
   
+  const wasmQueries = ["definitions", "callers", "callees", "file_structure", "search", "cypher"];
+  const isWasmQuery = wasmQueries.includes(query_type);
+
   let channelName = "cgc-tunnel-global-mcp";
   let cleanRepo = "";
 
-  if (!isGlobalTool && repo) {
+  if (repo && typeof repo === "string") {
     cleanRepo = repo.trim().replace(/^(https?:\/\/)?(www\.)?github\.com\//, "").replace(/\/$/, "");
+  }
+
+  // Only Kuzu WASM queries are repository-scoped (since they require active visualization rendering).
+  // All MCP Python tools are background-capable and are routed globally!
+  if (isWasmQuery && !isGlobalTool && cleanRepo) {
     const cleanRepoName = cleanRepo.replace(/\//g, "_").toLowerCase();
     channelName = `cgc-tunnel-${cleanRepoName}`;
   }
@@ -60,9 +68,6 @@ export default async function handler(req: any, res: any) {
       supabase.removeChannel(channel);
     } catch (err) {}
   };
-
-  const wasmQueries = ["definitions", "callers", "callees", "file_structure", "search", "cypher"];
-  const isWasmQuery = wasmQueries.includes(query_type);
 
   try {
     if (isWasmQuery) {
