@@ -1,4 +1,9 @@
 {
+  "functions": {
+    "api/v1/query.ts": {
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
     {
       "source": "/api/v1/query/:toolName",

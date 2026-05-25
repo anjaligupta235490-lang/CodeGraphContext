@@ -134,8 +134,8 @@ export default async function handler(req: any, res: any) {
         });
       });
 
-      // 500ms propagation buffer — critical after tab-sleep reconnects
-      await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      // 300ms propagation buffer — balances tab-wake latency vs Vercel's 10s function cap
+      await new Promise<void>((resolve) => setTimeout(resolve, 300));
 
       const sendStatus = await channel.send({
         type: "broadcast",
@@ -157,7 +157,8 @@ export default async function handler(req: any, res: any) {
         });
       }
 
-      const safetyTimeout = setTimeout(() => { if (resolveWait) resolveWait(); }, 6000);
+      // 3s cap — total fn time ~4.8s when offline, well under Vercel's 10s Hobby limit
+      const safetyTimeout = setTimeout(() => { if (resolveWait) resolveWait(); }, 3000);
       await waitPromise;
       clearTimeout(safetyTimeout);
 
@@ -200,8 +201,8 @@ export default async function handler(req: any, res: any) {
         });
       });
 
-      // 500ms propagation buffer — critical after tab-sleep reconnects
-      await new Promise<void>((resolve) => setTimeout(resolve, 500));
+      // 300ms propagation buffer — balances tab-wake latency vs Vercel's 10s function cap
+      await new Promise<void>((resolve) => setTimeout(resolve, 300));
 
       const toolArgs = { repo: cleanRepo, ...params };
 
@@ -219,7 +220,8 @@ export default async function handler(req: any, res: any) {
         });
       }
 
-      const safetyTimeout = setTimeout(() => { if (resolveWait) resolveWait(); }, 6000);
+      // 3s cap — total fn time ~4.8s when offline, well under Vercel's 10s Hobby limit
+      const safetyTimeout = setTimeout(() => { if (resolveWait) resolveWait(); }, 3000);
       await waitPromise;
       clearTimeout(safetyTimeout);
 
