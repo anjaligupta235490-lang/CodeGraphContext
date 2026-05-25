@@ -164,7 +164,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_ADMIN_WRITE_TOKEN: ${{ secrets.HF_ADMIN_WRITE_TOKEN }}
-          HF_REGISTRY_REPO: ${{ vars.HF_REGISTRY_REPO || secrets.HF_REGISTRY_REPO || 'codegraphcontext/bundles' }}
+          HF_REGISTRY_REPO: ${{ vars.HF_REGISTRY_REPO || secrets.HF_REGISTRY_REPO || 'codegraphcontext/registry' }}
         run: |
           import os
           import json
@@ -179,7 +179,7 @@ jobs:
               print("Error: Hugging Face token is missing. Please set HF_TOKEN or HF_ADMIN_WRITE_TOKEN in secrets.")
               exit(1)
 
-          hf_repo = os.environ.get("HF_REGISTRY_REPO", "codegraphcontext/bundles")
+          hf_repo = os.environ.get("HF_REGISTRY_REPO", "codegraphcontext/registry")
           api = HfApi(token=hf_token)
 
           # 1. Base64 encode the .cgc file
