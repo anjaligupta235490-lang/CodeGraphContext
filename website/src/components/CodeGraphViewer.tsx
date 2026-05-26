@@ -1484,9 +1484,9 @@ export default function CodeGraphViewer({ data, onClose }: { data: any, onClose:
               target="_blank"
               rel="noopener noreferrer"
               className={`flex items-center gap-2 text-[11px] uppercase tracking-widest font-bold px-4 py-2 border rounded-full transition-all backdrop-blur-md shadow-2xl cursor-pointer ${isDark ? 'bg-black/40 hover:bg-white/10 text-white border-white/10' : 'bg-white/80 hover:bg-white text-gray-800 border-black/10'}`}
-              title="Keep this tab open in background so ChatGPT can query this workspace!"
+              title="Open the CGC ChatGPT GPT. Keep this cgc.codes tab focused (not behind ChatGPT) so the signaling tunnel stays online."
             >
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_#10b981]" />
+              <div className="w-2 h-2 rounded-full bg-amber-500/80 shadow-[0_0_6px_#f59e0b]" title="Tunnel status is not shown here — keep this tab active while using ChatGPT" />
               <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
               ChatGPT
             </a>
@@ -1601,7 +1601,7 @@ export default function CodeGraphViewer({ data, onClose }: { data: any, onClose:
                   onClick={() => setShowMobileMenu(false)}
                   className={`flex items-center gap-2 text-[11px] uppercase tracking-widest font-bold px-4 py-2 border rounded-xl transition-all text-left w-full ${isDark ? 'hover:bg-white/5 border-white/5 text-white' : 'hover:bg-black/5 border-black/5 text-gray-800'}`}
                 >
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_#10b981]" />
+                  <div className="w-2 h-2 rounded-full bg-amber-500/80 shadow-[0_0_6px_#f59e0b]" />
                   <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
                   ChatGPT Tunnel
                 </a>

@@ -26,6 +26,7 @@ export class KuzuCoordinator {
   
   private isSubscribed = false;
   private isStarted = false; // Tracks if start() has been explicitly called by the parent component
+  private keepaliveInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     supabaseUrl: string,
@@ -182,6 +183,21 @@ export class KuzuCoordinator {
           console.log(`[KuzuCoordinator] ✅ Subscribed to global channel: ${globalChannelName}`);
         }
       });
+
+    // Keep WebSocket warm when ChatGPT tab steals focus (Firefox/Chrome throttle background tabs)
+    if (this.keepaliveInterval) clearInterval(this.keepaliveInterval);
+    this.keepaliveInterval = setInterval(() => {
+      if (!this.isStarted) return;
+      try {
+        this.globalChannel?.send({
+          type: "broadcast",
+          event: "tunnel-keepalive",
+          payload: { t: Date.now() }
+        });
+      } catch {
+        /* ignore */
+      }
+    }, 15000);
   }
 
   public async stop(keepStarted = false) {
@@ -204,6 +220,10 @@ export class KuzuCoordinator {
         await this.supabase.removeChannel(this.globalChannel);
       } catch (err) {}
       this.globalChannel = null;
+    }
+    if (this.keepaliveInterval) {
+      clearInterval(this.keepaliveInterval);
+      this.keepaliveInterval = null;
     }
     this.isSubscribed = false;
   }

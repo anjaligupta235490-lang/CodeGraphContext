@@ -15,7 +15,7 @@ function offlineResponse(query_type: string, cleanRepo: string) {
 
   const base = {
     status: "offline",
-    message: `Browser tunnel is offline. Open ${openUrl} in a browser tab to activate the live code graph, then retry.`,
+    message: `Browser tunnel is offline. Open ${openUrl} in a browser tab, keep that tab active (not in the background), wait a few seconds for the tunnel to connect, then retry in ChatGPT.`,
   };
 
   switch (query_type) {
@@ -157,8 +157,8 @@ export default async function handler(req: any, res: any) {
         });
       }
 
-      // 3s cap — total fn time ~4.8s when offline, well under Vercel's 10s Hobby limit
-      const safetyTimeout = setTimeout(() => { if (resolveWait) resolveWait(); }, 3000);
+      // 6s cap — background tabs can delay Supabase broadcast delivery; stay under Vercel 10s limit
+      const safetyTimeout = setTimeout(() => { if (resolveWait) resolveWait(); }, 6000);
       await waitPromise;
       clearTimeout(safetyTimeout);
 
@@ -220,8 +220,8 @@ export default async function handler(req: any, res: any) {
         });
       }
 
-      // 3s cap — total fn time ~4.8s when offline, well under Vercel's 10s Hobby limit
-      const safetyTimeout = setTimeout(() => { if (resolveWait) resolveWait(); }, 3000);
+      // 6s cap — background tabs can delay Supabase broadcast delivery; stay under Vercel 10s limit
+      const safetyTimeout = setTimeout(() => { if (resolveWait) resolveWait(); }, 6000);
       await waitPromise;
       clearTimeout(safetyTimeout);
 
