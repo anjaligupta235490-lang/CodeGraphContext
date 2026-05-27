@@ -243,6 +243,7 @@ export default async function handler(req: any, res: any) {
             repo: repo,
             bundle_name: finalBundleName,
             version: version,
+            commit: cleanCommit,
             size: sizeStr,
             download_url: `https://huggingface.co/datasets/${hfRepo}/resolve/main/${bundleFilename}`,
             generated_at: new Date().toISOString(),
