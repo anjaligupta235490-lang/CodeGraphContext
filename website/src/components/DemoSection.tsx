@@ -73,7 +73,7 @@ const itemVariants: Variants = {
             See CodeGraphContext in Action
           </h2>
           <p
-            className="text-xl text-muted-foreground max-w-3xl mx-auto mb-12"
+            className="text-xl text-white max-w-3xl mx-auto mb-12"
             data-aos="fade-up"
             data-aos-delay="200"
           >
@@ -145,7 +145,7 @@ const itemVariants: Variants = {
                           <h4 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">
                             {viz.title}
                           </h4>
-                          <p className="text-base text-muted-foreground flex-grow">
+                          <p className="text-base text-white flex-grow">
                             {viz.description}
                           </p>
                         </CardContent>
