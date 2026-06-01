@@ -87,7 +87,7 @@ const InstallationSection = () => {
         </div>
         <div className="mb-12">
           <div className="text-center mb-10">
-            <h3 className="text-xl text-muted-foreground max-w-3xl mx-auto">Understanding CodeGraphContext Modes</h3>
+            <h3 className="text-xl text-white max-w-3xl mx-auto">Understanding CodeGraphContext Modes</h3>
           </div>
           <div className="flex flex-col md:flex-row gap-8 mb-12">
             {[
@@ -117,7 +117,7 @@ const InstallationSection = () => {
                       </div>
                       <CardTitle className="text-xl font-semibold dark:text-foreground text-gray-900">{mode.title}</CardTitle>
                     </div>
-                    <CardDescription className="text-base text-muted-foreground leading-relaxed dark:text-muted-foreground text-gray-600">
+                    <CardDescription className="text-base text-white leading-relaxed dark:text-white text-gray-600">
                       {mode.description}
                     </CardDescription>
                   </div>
@@ -146,7 +146,7 @@ const InstallationSection = () => {
                 <Settings className="h-6 w-6 text-primary" />
                 <CardTitle className="text-2xl font-bold">Database Setup Options</CardTitle>
               </div>
-              <CardDescription className="text-base text-muted-foreground">
+              <CardDescription className="text-base text-white">
                 FalkorDB Lite is default (Unix). For Neo4j, the wizard supports multiple configurations:
               </CardDescription>
             </CardHeader>
@@ -177,7 +177,7 @@ const InstallationSection = () => {
                       <option.icon className={`h-6 w-6 text-${option.color}`} />
                     </div>
                     <h4 className="font-semibold mb-2 text-lg">{option.title}</h4>
-                    <p className="text-sm text-muted-foreground">{option.description}</p>
+                    <p className="text-sm text-white">{option.description}</p>
                   </div>
                 ))}
               </div>
@@ -192,7 +192,7 @@ const InstallationSection = () => {
         </div>
         <div className="mb-12">
           <div className="text-center mb-10">
-            <h3 className="text-xl text-muted-foreground max-w-3xl mx-auto">For CLI Toolkit Mode</h3>
+            <h3 className="text-xl text-white max-w-3xl mx-auto">For CLI Toolkit Mode</h3>
           </div>
           <Card className="mb-4">
             <CardHeader>
@@ -260,7 +260,7 @@ const InstallationSection = () => {
         <div>
           <div className="mb-12">
             <div className="text-center mb-10">
-              <h3 className="text-xl text-muted-foreground max-w-3xl mx-auto">For MCP Server Mode</h3>
+              <h3 className="text-xl text-white max-w-3xl mx-auto">For MCP Server Mode</h3>
             </div>
             <Card className="mb-4">
               <CardHeader>

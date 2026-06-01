@@ -50,7 +50,7 @@ const ExamplesSection = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent py-2">
             Natural Language Interface
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-white max-w-3xl mx-auto">
             Interact with your code graph using plain English. No complex queries or syntax to learn.
           </p>
         </div>
@@ -73,8 +73,8 @@ const ExamplesSection = () => {
                 <CardContent>
                   <div className="space-y-4">
                     {example.examples.map((text, idx) => (
-                      <div key={idx} className="p-3 rounded-md border-l-4 border-accent/30 bg-muted/30 hover:border-accent/60 transition-colors">
-                        <p className="text-sm text-muted-foreground italic">"{text}"</p>
+                      <div key={idx} className="p-3 rounded-md bordetext-muted-foregroundr-l-4 border-accent/30 bg-muted/30 hover:border-accent/60 transition-colors">
+                        <p className="text-sm  italic">"{text}"</p>
                       </div>
                     ))}
                   </div>
@@ -88,7 +88,7 @@ const ExamplesSection = () => {
           <Card className="max-w-2xl mx-auto bg-white/95 dark:bg-card/50 shadow-sm p-2">
             <CardContent className="pt-8">
               <h3 className="text-2xl font-bold mb-4">Ready to enhance your AI assistant?</h3>
-              <p className="text-muted-foreground mb-6">
+              <p className="text-white mb-6">
                 Start building intelligent code understanding today with CodeGraphContext.
               </p>
               <div className="p-3 rounded-md bg-muted/40 max-w-md mx-auto border shadow-inner">

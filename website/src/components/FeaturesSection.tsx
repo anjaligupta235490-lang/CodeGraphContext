@@ -36,7 +36,7 @@ const FeaturesSection = () => {
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-primary to-accent bg-clip-text text-transparent">
             Powerful Features
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          <p className="text-xl text-white max-w-3xl mx-auto">
             Transform your codebase into an intelligent knowledge graph that AI assistants can understand and navigate
           </p>
         </div>
@@ -55,7 +55,7 @@ const FeaturesSection = () => {
                     </div>
                     <CardTitle className="text-xl font-semibold dark:text-foreground text-gray-900">{feature.title}</CardTitle>
                   </div>
-                  <CardDescription className="text-base text-muted-foreground leading-relaxed dark:text-muted-foreground text-gray-600">
+                  <CardDescription className="text-base text-white leading-relaxed dark:text-white text-gray-600">
                     {feature.description}
                   </CardDescription>
                 </CardHeader>
