@@ -139,7 +139,7 @@ class CGCBundle:
                     from importlib.metadata import version as get_version
                     py_version = get_version("codegraphcontext")
                 except Exception:
-                    py_version = "0.4.12"
+                    py_version = "0.4.13"
 
                 metadata["format_version"] = "1.0.0"
                 metadata["generator"] = f"PYv{py_version}"

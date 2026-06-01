@@ -97,7 +97,7 @@
 ---
 
 ## Деталі проєкту
-- **Версія:** 0.4.12
+- **Версія:** 0.4.13
 - **Автори:** Shashank Shekhar Singh <shashankshekharsingh1205@gmail.com>
 - **Ліцензія:** MIT License (див. [LICENSE](LICENSE) для деталей)
 - **Вебсайт:** [CodeGraphContext](http://codegraphcontext.vercel.app/)
