@@ -444,7 +444,7 @@ const HeroSection = () => {
                 CodeGraphContext
               </h1>
 
-              <p className="text-xl md:text-2xl text-muted-foreground mb-3 leading-relaxed max-w-2xl">
+              <p className="text-xl md:text-2xl text-red-500 mb-3 leading-relaxed max-w-2xl">
                 A powerful CLI toolkit &amp; MCP server that indexes local code into a
               </p>
               <p className="text-xl md:text-2xl text-accent font-semibold mb-6 sm:mb-10">
