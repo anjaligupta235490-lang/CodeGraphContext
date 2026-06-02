@@ -22,7 +22,6 @@ from pathlib import Path
 from importlib.metadata import version as pkg_version, PackageNotFoundError
 
 from codegraphcontext.server import MCPServer
-from codegraphcontext.core.database import DatabaseManager
 from .setup_wizard import run_neo4j_setup_wizard, configure_mcp_client
 from . import config_manager
 # Import the new helper functions
@@ -979,6 +978,7 @@ def doctor():
             password = os.environ.get("NEO4J_PASSWORD")
             database_name = os.environ.get("NEO4J_DATABASE")
 
+            from codegraphcontext.core.database import DatabaseManager
             missing = DatabaseManager.get_missing_credentials(uri, username, password)
             console.print(f"   [cyan]Credential check:[/cyan] {'OK' if not missing else 'Missing ' + ', '.join(missing)}")
             if missing:

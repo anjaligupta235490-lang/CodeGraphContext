@@ -1,8 +1,9 @@
+from __future__ import annotations
 # src/codegraphcontext/tools/advanced_language_query_tool.py
 import re
 import logging
-
-# importing all the language toolkits
+from typing import TYPE_CHECKING
+#importing all the language toolkits
 from ..tools.query_tool_languages.c_toolkit import CToolkit
 from ..tools.query_tool_languages.cpp_toolkit import CppToolkit
 from ..tools.query_tool_languages.go_toolkit import GoToolkit
@@ -17,7 +18,8 @@ from ..tools.query_tool_languages.dart_toolkit import DartToolkit
 from ..tools.query_tool_languages.elisp_toolkit import ElispToolkit
 from ..tools.query_tool_languages.perl_toolkit import PerlToolkit
 
-from ..core.database import DatabaseManager
+if TYPE_CHECKING:
+    from ..core.database import DatabaseManager
 from ..utils.debug_log import debug_log
 
 logger = logging.getLogger(__name__)

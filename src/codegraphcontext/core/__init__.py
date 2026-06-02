@@ -205,6 +205,25 @@ def get_database_manager(db_path: Optional[str] = None) -> Union['DatabaseManage
 
     raise ValueError(error_msg)
 
+# Lazy backward-compatibility exports — avoids crashing when optional
+# database drivers (neo4j, falkordb, real_ladybug, …) are not installed.
+# Uses PEP 562 module-level __getattr__ so that:
+#   from codegraphcontext.core import DatabaseManager
+# still works, but only triggers the real import when actually accessed.
+_LAZY_IMPORTS = {
+    'DatabaseManager': '.database',
+    'FalkorDBManager': '.database_falkordb',
+    'FalkorDBRemoteManager': '.database_falkordb_remote',
+    'KuzuDBManager': '.database_kuzu',
+    'NornicDBManager': '.database_nornic',
+}
+
+def __getattr__(name: str):
+    if name in _LAZY_IMPORTS:
+        import importlib
+        module = importlib.import_module(_LAZY_IMPORTS[name], __package__)
+        return getattr(module, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 # For backward compatibility, export managers
 from .database import DatabaseManager
 from .database_falkordb import FalkorDBManager
