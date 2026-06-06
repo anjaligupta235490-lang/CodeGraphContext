@@ -4,6 +4,12 @@ on:
   issues:
     types: [labeled]
 
+# Note on permissions:
+# - Default GITHUB_TOKEN may not have organization permissions to read team members or request reviews.
+# - If you get "Not Found" or "Forbidden" errors when querying org teams, you can pass a custom 
+#   Personal Access Token (PAT) with "read:org" permissions, or configure a GitHub App token.
+# - To use a PAT, change github-token input below to: github-token: ${{ secrets.YOUR_PAT_SECRET }}
+
 jobs:
   route:
     runs-on: ubuntu-latest
@@ -16,6 +22,7 @@ jobs:
       - name: Route issue based on labels
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.ROUTE_ISSUES_PAT || github.token }}
           script: |
             const labelName = context.payload.label.name;
             const isPullRequest = !!context.payload.issue.pull_request;
@@ -222,5 +229,17 @@ jobs:
                 }
               } catch (error) {
                 console.warn(`Could not automatically assign team members (non-fatal): ${error.message}`);
+                if (error.status === 404) {
+                  console.log(`Team "${teamSlug}" not found in org "${context.repo.owner}". Listing all teams in the organization for troubleshooting...`);
+                  try {
+                    const teams = await github.rest.teams.list({
+                      org: context.repo.owner
+                    });
+                    const slugs = teams.data.map(t => t.slug);
+                    console.log(`Available teams: ${slugs.join(', ') || '(none)'}`);
+                  } catch (listError) {
+                    console.warn(`Could not list teams in org: ${listError.message}`);
+                  }
+                }
               }
             }
