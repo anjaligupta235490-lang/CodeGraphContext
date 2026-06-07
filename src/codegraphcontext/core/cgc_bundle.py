@@ -635,11 +635,6 @@ class CGCBundle:
                             else:
                                 to_id = str(id(target))
 
-                        edge_key = (str(from_id), str(rel_type), str(to_id))
-                        if edge_key in seen_edges:
-                            continue
-                        seen_edges.add(edge_key)
-                        
                         # Clean up absolute path prefix inside edge properties
                         if repo_path:
                             repo_str = str(repo_path.resolve())
@@ -652,6 +647,17 @@ class CGCBundle:
                                 elif val.startswith(repo_prefix):
                                     rel = val[len(repo_prefix):].lstrip('/\\')
                                     rel_props[key] = "./" + rel if rel else "."
+
+                        props_key = tuple(
+                            sorted(
+                                (k, json.dumps(v, sort_keys=True, default=str))
+                                for k, v in rel_props.items()
+                            )
+                        )
+                        edge_key = (str(from_id), str(rel_type), str(to_id), props_key)
+                        if edge_key in seen_edges:
+                            continue
+                        seen_edges.add(edge_key)
                         
                         # Create edge representation
                         edge_dict = {

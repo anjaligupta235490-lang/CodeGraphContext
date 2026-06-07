@@ -1,6 +1,6 @@
 {
   "cgc_version": "0.1.0",
-  "exported_at": "2026-06-07T16:28:26Z",
+  "exported_at": "2026-06-07T18:02:28Z",
   "format_version": "1.0.0",
   "repo": "sample_project_php",
   "repo_path": ".",
@@ -11,6 +11,6 @@
   "name": "sample_project_php.cgc",
   "graph_metrics": {
     "total_nodes": 757,
-    "total_edges": 865
+    "total_edges": 866
   }
 }

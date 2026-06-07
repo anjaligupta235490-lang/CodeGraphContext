@@ -1,12 +1,12 @@
 {
   "cgc_version": "0.1.0",
-  "exported_at": "2026-06-07T16:26:31Z",
+  "exported_at": "2026-06-07T18:00:37Z",
   "format_version": "1.0.0",
   "repo": "sample_project_dart",
   "repo_path": ".",
   "is_dependency": false,
-  "commit": "c6d693bc",
-  "branch": "main",
+  "commit": "f3f62d33",
+  "branch": "fix/e2e-security-followup",
   "generator": "PYv0.4.16",
   "name": "sample_project_dart.cgc",
   "graph_metrics": {
