@@ -22,8 +22,61 @@ def _is_binder_exception(e: Exception) -> bool:
 class GraphWriter:
     """Persists repository/file/symbol nodes and relationships via the Neo4j-like driver API."""
 
-    def __init__(self, driver: Any):
+    def __init__(self, driver: Any, db_manager: Any = None):
         self.driver = driver
+        self._db_manager = db_manager
+
+    def _get_all_node_labels(self) -> list[str]:
+        """Discover all node labels in the database, backend-aware.
+
+        Neo4j uses ``CALL db.labels()``, KuzuDB uses
+        ``MATCH (n) RETURN DISTINCT label(n)`` (since ``SHOW TABLES``
+        is not supported in KuzuDB Python bindings ≤ 0.11),
+        and other backends fall back to a comprehensive static list.
+        """
+        # Prefer db_manager.get_backend_type(); fall back to driver, then neo4j
+        backend = (
+            getattr(self._db_manager, "get_backend_type", None)
+            or getattr(self.driver, "get_backend_type", None)
+            or (lambda: "neo4j")
+        )()
+
+        if backend == "kuzudb":
+            try:
+                with self.driver.session() as session:
+                    result = session.run("MATCH (n) RETURN DISTINCT label(n) AS lbl")
+                    labels = sorted({record[0] for record in result if record[0]})
+                    if labels:
+                        return labels
+            except Exception as e:
+                info_logger(f"[DELETE] label discovery failed for KuzuDB ({e}), using fallback list")
+
+        elif backend in ("neo4j", "nornicdb"):
+            try:
+                with self.driver.session() as session:
+                    label_records = session.run("CALL db.labels() YIELD label RETURN label")
+                    return sorted({record["label"] for record in label_records})
+            except Exception as e:
+                info_logger(f"[DELETE] CALL db.labels() failed ({e}), using fallback list")
+
+        elif backend in ("falkordb", "falkordb-remote"):
+            try:
+                with self.driver.session() as session:
+                    label_records = session.run("CALL db.labels()")
+                    return sorted({record["label"] for record in label_records})
+            except Exception as e:
+                info_logger(f"[DELETE] CALL db.labels() failed for FalkorDB ({e}), using fallback list")
+
+        # Fallback: comprehensive list of all known CGC node labels
+        return sorted({
+            "Repository", "Directory", "File", "Function", "Class",
+            "Variable", "Parameter", "Module", "Interface", "Trait",
+            "Struct", "Enum", "EnumValue", "Namespace", "TypeAlias",
+            "Decorator", "Property", "Method", "DbTable", "DbColumn",
+            "RedisKeyPattern", "ExternalClass", "ExternalFunction",
+            "MavenModule", "GradleModule", "Endpoint", "OrmMapping",
+            "Query", "SpringDataRepository",
+        })
 
     def add_repository_to_graph(self, repo_path: Path, is_dependency: bool = False) -> None:
         repo_name = repo_path.name
@@ -1364,17 +1417,16 @@ class GraphWriter:
         # list. Every time the indexer learned a new node type (Variable,
         # Parameter, Directory, ExternalClass, DbTable, ...) the hardcoded
         # tuple here had to be kept in lockstep, and every miss leaked
-        # orphan nodes on `delete_repository`. `CALL db.labels()` returns
-        # exactly the set of labels that have at least one node in the
-        # current database -- per-label DETACH DELETE with the same path
-        # prefix is then label-agnostic and self-maintaining.
+        # orphan nodes on `delete_repository`.
+        #
+        # Neo4j: `CALL db.labels()` returns exactly the set of labels.
+        # KuzuDB: `MATCH (n) RETURN DISTINCT label(n)` discovers labels dynamically.
+        # Other backends: comprehensive fallback list.
         #
         # Labels with no node matching the path prefix are cheap: the
         # label-scoped scan returns 0 rows, the while-True loop exits
         # immediately, and we move on.
-        with self.driver.session() as session:
-            label_records = session.run("CALL db.labels() YIELD label RETURN label")
-            all_labels = sorted({record["label"] for record in label_records})
+        all_labels = self._get_all_node_labels()
 
         for label in all_labels:
             while True:

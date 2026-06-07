@@ -34,7 +34,7 @@ class GraphBuilder:
         self.job_manager = job_manager
         self.loop = loop
         self.driver = self.db_manager.get_driver()
-        self._writer = GraphWriter(self.driver)
+        self._writer = GraphWriter(self.driver, db_manager=self.db_manager)
         self.last_call_resolution_diagnostics: list[Dict[str, Any]] = []
         self.parsers = {
             ".py": "python",
