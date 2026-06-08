@@ -75,19 +75,15 @@
 {"from": {"offset": 18, "table": 1}, "to": {"offset": 8, "table": 15}, "type": "CONTAINS", "properties": {}}
 {"from": {"offset": 18, "table": 1}, "to": {"offset": 9, "table": 15}, "type": "CONTAINS", "properties": {}}
 {"from": {"offset": 0, "table": 1}, "to": {"offset": 0, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 10, "alias": "", "full_import_name": "System", "imported_name": "System"}}
-{"from": {"offset": 0, "table": 1}, "to": {"offset": 1, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 11, "alias": "", "full_import_name": "System.Reflection", "imported_name": "System.Reflection"}}
 {"from": {"offset": 1, "table": 1}, "to": {"offset": 0, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 2, "alias": "", "full_import_name": "System", "imported_name": "System"}}
-{"from": {"offset": 1, "table": 1}, "to": {"offset": 1, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 3, "alias": "", "full_import_name": "System.Reflection", "imported_name": "System.Reflection"}}
 {"from": {"offset": 2, "table": 1}, "to": {"offset": 0, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 1, "alias": "", "full_import_name": "System", "imported_name": "System"}}
 {"from": {"offset": 2, "table": 1}, "to": {"offset": 9, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 2, "alias": "", "full_import_name": "Example.App.Attributes", "imported_name": "Example.App.Attributes"}}
 {"from": {"offset": 4, "table": 1}, "to": {"offset": 0, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 1, "alias": "", "full_import_name": "System", "imported_name": "System"}}
 {"from": {"offset": 4, "table": 1}, "to": {"offset": 8, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 2, "alias": "", "full_import_name": "Example.App.Models", "imported_name": "Example.App.Models"}}
 {"from": {"offset": 5, "table": 1}, "to": {"offset": 0, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 2, "alias": "", "full_import_name": "System", "imported_name": "System"}}
-{"from": {"offset": 5, "table": 1}, "to": {"offset": 2, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 6, "alias": "", "full_import_name": "System.Net.Http", "imported_name": "System.Net.Http"}}
 {"from": {"offset": 5, "table": 1}, "to": {"offset": 3, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 3, "alias": "", "full_import_name": "System.Collections.Generic", "imported_name": "System.Collections.Generic"}}
 {"from": {"offset": 5, "table": 1}, "to": {"offset": 4, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 5, "alias": "", "full_import_name": "System.Linq", "imported_name": "System.Linq"}}
 {"from": {"offset": 5, "table": 1}, "to": {"offset": 5, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 4, "alias": "", "full_import_name": "System.IO", "imported_name": "System.IO"}}
-{"from": {"offset": 5, "table": 1}, "to": {"offset": 6, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 7, "alias": "", "full_import_name": "System.Threading", "imported_name": "System.Threading"}}
 {"from": {"offset": 5, "table": 1}, "to": {"offset": 7, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 8, "alias": "", "full_import_name": "System.Threading.Tasks", "imported_name": "System.Threading.Tasks"}}
 {"from": {"offset": 7, "table": 1}, "to": {"offset": 0, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 1, "alias": "", "full_import_name": "System", "imported_name": "System"}}
 {"from": {"offset": 7, "table": 1}, "to": {"offset": 3, "table": 3}, "type": "IMPORTS", "properties": {"line_number": 2, "alias": "", "full_import_name": "System.Collections.Generic", "imported_name": "System.Collections.Generic"}}

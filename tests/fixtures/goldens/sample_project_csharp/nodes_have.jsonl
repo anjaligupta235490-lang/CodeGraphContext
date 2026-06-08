@@ -128,12 +128,9 @@
 {"_id": {"offset": 25, "table": 16}, "path": "./src/Example.App/Models/Point.cs", "name": "latitude", "uid": "latitude/home/shashank/Desktop/cgc/CodeGraphContext/tests/fixtures/sample_projects/sample_project_csharp/src/Example.App/Models/Point.cs43", "function_line_number": 43, "_labels": ["Parameter"]}
 {"_id": {"offset": 26, "table": 16}, "path": "./src/Example.App/Models/Point.cs", "name": "longitude", "uid": "longitude/home/shashank/Desktop/cgc/CodeGraphContext/tests/fixtures/sample_projects/sample_project_csharp/src/Example.App/Models/Point.cs43", "function_line_number": 43, "_labels": ["Parameter"]}
 {"_id": {"offset": 0, "table": 3}, "name": "System", "lang": "c_sharp", "full_import_name": "System", "_labels": ["Module"]}
-{"_id": {"offset": 1, "table": 3}, "name": "System.Reflection", "lang": "c_sharp", "full_import_name": "System.Reflection", "_labels": ["Module"]}
-{"_id": {"offset": 2, "table": 3}, "name": "System.Net.Http", "lang": "c_sharp", "full_import_name": "System.Net.Http", "_labels": ["Module"]}
 {"_id": {"offset": 3, "table": 3}, "name": "System.Collections.Generic", "lang": "c_sharp", "full_import_name": "System.Collections.Generic", "_labels": ["Module"]}
 {"_id": {"offset": 4, "table": 3}, "name": "System.Linq", "lang": "c_sharp", "full_import_name": "System.Linq", "_labels": ["Module"]}
 {"_id": {"offset": 5, "table": 3}, "name": "System.IO", "lang": "c_sharp", "full_import_name": "System.IO", "_labels": ["Module"]}
-{"_id": {"offset": 6, "table": 3}, "name": "System.Threading", "lang": "c_sharp", "full_import_name": "System.Threading", "_labels": ["Module"]}
 {"_id": {"offset": 7, "table": 3}, "name": "System.Threading.Tasks", "lang": "c_sharp", "full_import_name": "System.Threading.Tasks", "_labels": ["Module"]}
 {"_id": {"offset": 8, "table": 3}, "name": "Example.App.Models", "lang": "c_sharp", "full_import_name": "Example.App.Models", "_labels": ["Module"]}
 {"_id": {"offset": 9, "table": 3}, "name": "Example.App.Attributes", "lang": "c_sharp", "full_import_name": "Example.App.Attributes", "_labels": ["Module"]}
